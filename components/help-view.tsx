@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Plus, Play, RotateCcw, Calendar, Search, Trash2, BarChart3, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { GitHub } from 'lucide-react';
 
 interface HelpViewProps {
   onClose: () => void

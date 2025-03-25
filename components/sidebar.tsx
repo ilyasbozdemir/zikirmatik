@@ -76,15 +76,11 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr }: SidebarProps) {
         <p className="text-sm text-muted-foreground">v1.0.0-rc</p>
         <p className="text-xs text-muted-foreground mt-1">Ömür boyu ücretsiz</p>
         <p className="text-xs text-muted-foreground mt-2">
-          <a
-            href="https://github.com/ilyasbozdemir/zikirmatik"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
-          >
-            GitHub: https://github.com/ilyasbozdemir/zikirmatik
-          </a>
-        </p>
+    <a href="https://github.com/ilyasbozdemir/zikirmatik" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center space-x-1">
+      <GitHub className="w-4 h-4" />
+      <span>GitHub Reposu</span>
+    </a>
+  </p>
       </div>
     </div>
   );
