@@ -83,7 +83,6 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr }: SidebarProps) {
             rel="noopener noreferrer"
             className="text-blue-500 hover:underline"
           >
-            <Github className="w-4 h-4" />
             <span>GitHub Reposu</span>
           </a>
         </p>

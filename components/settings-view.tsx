@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { GitHub } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -227,7 +227,6 @@ export function SettingsView({ onClose }: SettingsViewProps) {
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"
               >
-                <GitHub className="w-4 h-4" />
                 <span>GitHub Reposu</span>
               </a>
             </p>
