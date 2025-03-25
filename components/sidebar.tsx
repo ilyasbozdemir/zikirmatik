@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Home, BarChart3, Clock, Settings, Info, Plus } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
+import { GitHub } from "lucide-react";
 
 interface SidebarProps {
   activeView: string;
