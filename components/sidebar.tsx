@@ -81,7 +81,7 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr }: SidebarProps) {
             href="https://github.com/ilyasbozdemir/zikirmatik"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:underline flex items-center space-x-1"
+            className="text-blue-500 hover:underline"
           >
             <Github className="w-4 h-4" />
             <span>GitHub Reposu</span>
