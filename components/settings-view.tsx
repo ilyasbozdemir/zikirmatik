@@ -282,8 +282,9 @@ export function SettingsView({ onClose }: SettingsViewProps) {
               Zikirmatik v1.0.0-rc
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              © 2023 Tüm hakları saklıdır.
+              © {new Date().getFullYear()} Tüm hakları saklıdır.
             </p>
+
             <p className="text-sm text-primary mt-2 font-medium">
               Ömür boyu ücretsiz
             </p>
