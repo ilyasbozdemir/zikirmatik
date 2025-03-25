@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Moon, Sun, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Download, Trash2, Upload } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,8 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onClose }: SettingsViewProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { theme, setTheme } = useTheme();
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("dhikrSoundEnabled");
@@ -44,6 +46,10 @@ export function SettingsView({ onClose }: SettingsViewProps) {
   useEffect(() => {
     localStorage.setItem("dhikrVibrationEnabled", vibrationEnabled.toString());
   }, [vibrationEnabled]);
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const exportData = () => {
     try {
@@ -65,6 +71,48 @@ export function SettingsView({ onClose }: SettingsViewProps) {
       toast({
         title: "Hata",
         description: "Veriler dışa aktarılırken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0]; // Kullanıcıdan dosya seçildi mi kontrol et
+      if (!file) {
+        toast({
+          title: "Hata",
+          description: "Lütfen bir dosya seçin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target?.result as string); // Dosyanın içeriğini JSON olarak parse et
+          localStorage.setItem("dhikrs", JSON.stringify(importedData)); // Veriyi localStorage'a kaydet
+
+          toast({
+            title: "Veriler içe aktarıldı",
+            description: "Zikirleriniz başarıyla içe aktarıldı.",
+          });
+        } catch (error) {
+          toast({
+            title: "Hata",
+            description: "Geçersiz dosya formatı.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      reader.readAsText(file); // Dosyayı metin olarak oku
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "Veriler içe aktarılırken bir hata oluştu.",
         variant: "destructive",
       });
     }
@@ -167,6 +215,25 @@ export function SettingsView({ onClose }: SettingsViewProps) {
           </CardHeader>
           <CardContent className="p-4">
             <div className="space-y-4">
+              <div>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  //onClick={handleButtonClick}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Verileri İçe Aktar (Beta)
+                </Button>
+
+                <input
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={importData}
+                />
+              </div>
+
               <Button
                 variant="outline"
                 className="w-full justify-start"
