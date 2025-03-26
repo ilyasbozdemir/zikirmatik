@@ -1,17 +1,18 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, BarChart3, Clock, Settings, Plus } from "lucide-react"
+import { Home, BarChart3, Settings, Plus, HelpCircle, Share2 } from "lucide-react"
 
 interface BottomNavProps {
   activeView: string
   onNavigate: (view: string) => void
   onAddDhikr: () => void
+  onShare: () => void
 }
 
-export function BottomNav({ activeView, onNavigate, onAddDhikr }: BottomNavProps) {
+export function BottomNav({ activeView, onNavigate, onAddDhikr, onShare }: BottomNavProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around px-2">
+    <div className="fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around px-2 z-10">
       <Button
         variant="ghost"
         size="icon"
@@ -34,22 +35,17 @@ export function BottomNav({ activeView, onNavigate, onAddDhikr }: BottomNavProps
         <Plus className="h-6 w-6" />
       </Button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className={activeView === "schedule" ? "text-primary" : "text-muted-foreground"}
-        onClick={() => onNavigate("schedule")}
-      >
-        <Clock className="h-5 w-5" />
+      <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={onShare}>
+        <Share2 className="h-5 w-5" />
       </Button>
 
       <Button
         variant="ghost"
         size="icon"
-        className={activeView === "settings" ? "text-primary" : "text-muted-foreground"}
-        onClick={() => onNavigate("settings")}
+        className={activeView === "settings" || activeView === "help" ? "text-primary" : "text-muted-foreground"}
+        onClick={() => onNavigate(activeView === "help" ? "settings" : "help")}
       >
-        <Settings className="h-5 w-5" />
+        {activeView === "help" ? <Settings className="h-5 w-5" /> : <HelpCircle className="h-5 w-5" />}
       </Button>
     </div>
   )

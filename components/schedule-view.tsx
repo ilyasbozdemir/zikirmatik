@@ -4,12 +4,18 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Calendar, Clock, Check } from "lucide-react"
+import { ArrowLeft, Plus, Calendar, Clock, Check, Info, FileText } from "lucide-react"
 import type { Dhikr } from "@/app/page"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { commonDhikrs } from "@/app/page"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { formatNumber } from "@/lib/format-number"
 
 interface ScheduleViewProps {
   dhikrs: Dhikr[]
@@ -21,6 +27,10 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
   const [selectedDhikr, setSelectedDhikr] = useState<Dhikr | null>(null)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [selectedTime, setSelectedTime] = useState("08:00")
+  const [activeTab, setActiveTab] = useState("existing")
+  const [customName, setCustomName] = useState("")
+  const [customCount, setCustomCount] = useState(33)
+  const [customCategory, setCustomCategory] = useState("Tesbih")
   const { toast } = useToast()
 
   const plannedDhikrs = dhikrs.filter((d) => d.status === "planned" || d.status === "in-progress")
@@ -44,8 +54,60 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
     }
   }
 
+  const selectAllDays = () => {
+    setSelectedDays(weekdays.map((day) => day.value))
+  }
+
+  const clearAllDays = () => {
+    setSelectedDays([])
+  }
+
+  const createCustomDhikr = () => {
+    if (!customName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Lütfen bir zikir adı girin.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const newDhikr: Dhikr = {
+      id: Date.now().toString(),
+      name: customName.trim(),
+      targetCount: customCount,
+      currentCount: 0,
+      dateCreated: new Date().toISOString(),
+      status: "planned",
+      category: customCategory,
+      scheduledDays: selectedDays,
+      scheduledTime: selectedTime,
+    }
+
+    setDhikrs((prev) => [...prev, newDhikr])
+
+    toast({
+      title: "Zikir oluşturuldu ve planlandı",
+      description: `"${customName}" zikri oluşturuldu ve planlandı.`,
+    })
+
+    // Reset form
+    setCustomName("")
+    setCustomCount(33)
+    setCustomCategory("Tesbih")
+    setSelectedDays([])
+    setActiveTab("existing")
+  }
+
   const saveSchedule = () => {
-    if (!selectedDhikr || selectedDays.length === 0) return
+    if (!selectedDhikr || selectedDays.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Lütfen en az bir gün seçin.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setDhikrs((prev) =>
       prev.map((dhikr) => {
@@ -73,6 +135,7 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
     setDhikrs((prev) =>
       prev.map((d) => {
         if (d.id === dhikr.id) {
+          // Destructuring ile scheduledDays ve scheduledTime'ı çıkarıp geri kalanı rest'e atıyoruz
           const { scheduledDays, scheduledTime, ...rest } = d
           return rest
         }
@@ -92,9 +155,16 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
     setSelectedTime(dhikr.scheduledTime || "08:00")
   }
 
+  const selectFromCollection = (preset: (typeof commonDhikrs)[0]) => {
+    setCustomName(preset.name)
+    setCustomCount(preset.count)
+    setCustomCategory(preset.category || "Tesbih")
+  }
+
   const formatDays = (days: string[]) => {
+    if (!days || days.length === 0) return ""
+
     if (days.length === 7) return "Her gün"
-    if (days.length === 0) return ""
 
     return days
       .map((day) => {
@@ -116,7 +186,21 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
       <div className="space-y-6">
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-lg">Planlı Zikirler</CardTitle>
+            <CardTitle className="text-lg flex items-center justify-between">
+              Planlı Zikirler
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Planlı zikirler, seçtiğiniz günlerde ve saatte size hatırlatılır.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             {scheduledDhikrs.length > 0 ? (
@@ -160,44 +244,193 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
             <CardTitle className="text-lg">Yeni Plan Ekle</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Zikir Seçin</label>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {selectedDhikr ? selectedDhikr.name : "Zikir seçin"}
-                      <Plus className="h-4 w-4 ml-2" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="h-[50vh]">
-                    <SheetHeader className="mb-4">
-                      <SheetTitle>Zikir Seçin</SheetTitle>
-                      <SheetDescription>Planlamak istediğiniz zikri seçin</SheetDescription>
-                    </SheetHeader>
-                    <div className="space-y-2">
-                      {plannedDhikrs.map((dhikr) => (
-                        <Button
-                          key={dhikr.id}
-                          variant="outline"
-                          className="w-full justify-between"
-                          onClick={() => {
-                            handleDhikrSelect(dhikr)
-                          }}
-                        >
-                          <span>{dhikr.name}</span>
-                          {dhikr.scheduledDays && dhikr.scheduledTime && <Badge variant="secondary">Planlı</Badge>}
-                        </Button>
-                      ))}
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="existing">Mevcut Zikirler</TabsTrigger>
+                <TabsTrigger value="collection">Koleksiyon</TabsTrigger>
+                <TabsTrigger value="custom">Yeni Oluştur</TabsTrigger>
+              </TabsList>
 
-              {selectedDhikr && (
-                <>
+              <TabsContent value="existing">
+                <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Günler</label>
+                    <label className="text-sm font-medium mb-1 block">Zikir Seçin</label>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          {selectedDhikr ? selectedDhikr.name : "Zikir seçin"}
+                          <Plus className="h-4 w-4 ml-2" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="bottom" className="h-[50vh]">
+                        <SheetHeader className="mb-4">
+                          <SheetTitle>Zikir Seçin</SheetTitle>
+                          <SheetDescription>Planlamak istediğiniz zikri seçin</SheetDescription>
+                        </SheetHeader>
+                        <div className="space-y-2">
+                          {plannedDhikrs.length > 0 ? (
+                            plannedDhikrs.map((dhikr) => (
+                              <Button
+                                key={dhikr.id}
+                                variant="outline"
+                                className="w-full justify-between"
+                                onClick={() => {
+                                  handleDhikrSelect(dhikr)
+                                }}
+                              >
+                                <span>{dhikr.name}</span>
+                                {dhikr.scheduledDays && dhikr.scheduledTime && (
+                                  <Badge variant="secondary">Planlı</Badge>
+                                )}
+                              </Button>
+                            ))
+                          ) : (
+                            <div className="text-center py-4">
+                              <p className="text-sm text-muted-foreground">
+                                Henüz planlanabilecek zikir bulunmuyor. Önce bir zikir ekleyin veya koleksiyondan seçin.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  </div>
+
+                  {selectedDhikr && (
+                    <>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium">Günler</label>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={selectAllDays}>
+                              Tümünü Seç
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={clearAllDays}>
+                              Temizle
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {weekdays.map((day) => (
+                            <Button
+                              key={day.value}
+                              type="button"
+                              size="sm"
+                              variant={selectedDays.includes(day.value) ? "default" : "outline"}
+                              className="h-10"
+                              onClick={() => toggleDay(day.value)}
+                            >
+                              {day.label.substring(0, 3)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">Saat</label>
+                        <input
+                          type="time"
+                          value={selectedTime}
+                          onChange={(e) => setSelectedTime(e.target.value)}
+                          className="w-full p-2 border rounded-md"
+                        />
+                      </div>
+
+                      <Button className="w-full" onClick={saveSchedule} disabled={selectedDays.length === 0}>
+                        <Check className="mr-2 h-4 w-4" /> Planı Kaydet
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="collection">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2">
+                    {commonDhikrs.map((dhikr) => (
+                      <Button
+                        key={dhikr.name}
+                        variant="outline"
+                        onClick={() => {
+                          selectFromCollection(dhikr)
+                          setActiveTab("custom")
+                        }}
+                        className="justify-between"
+                      >
+                        <span>{dhikr.name}</span>
+                        <Badge variant="secondary">{formatNumber(dhikr.count)}</Badge>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="custom">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="customName">Zikir Adı</Label>
+                    <Input
+                      id="customName"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      placeholder="Örn: Sübhanallah"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customCategory">Kategori</Label>
+                    <Input
+                      id="customCategory"
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      placeholder="Örn: Tesbih"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customCount">Hedef Sayı</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCustomCount((prev) => Math.max(1, prev - 1))}
+                      >
+                        -
+                      </Button>
+                      <Input
+                        id="customCount"
+                        type="number"
+                        min="1"
+                        value={customCount}
+                        onChange={(e) => setCustomCount(Number.parseInt(e.target.value) || 1)}
+                        className="text-center"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCustomCount((prev) => prev + 1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium">Günler</label>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={selectAllDays}>
+                          Tümünü Seç
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={clearAllDays}>
+                          Temizle
+                        </Button>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-7 gap-1">
                       {weekdays.map((day) => (
                         <Button
@@ -224,12 +457,16 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
                     />
                   </div>
 
-                  <Button className="w-full" onClick={saveSchedule} disabled={selectedDays.length === 0}>
-                    <Check className="mr-2 h-4 w-4" /> Planı Kaydet
+                  <Button
+                    className="w-full"
+                    onClick={createCustomDhikr}
+                    disabled={!customName.trim() || selectedDays.length === 0}
+                  >
+                    <FileText className="mr-2 h-4 w-4" /> Oluştur ve Planla
                   </Button>
-                </>
-              )}
-            </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

@@ -36,6 +36,7 @@ import { SettingsView } from "@/components/settings-view"
 import { ScheduleView } from "@/components/schedule-view"
 import { Sidebar } from "@/components/sidebar"
 import { BottomNav } from "@/components/bottom-nav"
+import { ShareView } from "@/components/share-view"
 
 // Define the Dhikr type
 export type Dhikr = {
@@ -81,12 +82,43 @@ export default function Home() {
   const { toast } = useToast()
   const { theme, setTheme } = useTheme()
   const isMobile = useMobile()
+  const [showShare, setShowShare] = useState(false)
 
   // Load dhikrs from localStorage on component mount
   useEffect(() => {
     const savedDhikrs = localStorage.getItem("dhikrs")
     if (savedDhikrs) {
-      setDhikrs(JSON.parse(savedDhikrs))
+      try {
+        // Parse saved dhikrs
+        const parsedDhikrs = JSON.parse(savedDhikrs)
+
+        // Migrate old format to new format if needed
+        const migratedDhikrs = parsedDhikrs.map((dhikr: any) => {
+          // Ensure scheduledDays is an array of strings
+          if (dhikr.scheduledDays) {
+            // Handle case where scheduledDays might be in old format
+            if (typeof dhikr.scheduledDays === "string") {
+              try {
+                dhikr.scheduledDays = JSON.parse(dhikr.scheduledDays)
+              } catch (e) {
+                // If parsing fails, convert to array with the string
+                dhikr.scheduledDays = [dhikr.scheduledDays]
+              }
+            }
+
+            // Ensure all days are in lowercase format
+            dhikr.scheduledDays = dhikr.scheduledDays.map((day: string) => day.toLowerCase())
+          }
+
+          return dhikr
+        })
+
+        setDhikrs(migratedDhikrs)
+      } catch (error) {
+        console.error("Error parsing saved dhikrs:", error)
+        setDhikrs([])
+        localStorage.setItem("dhikrs", JSON.stringify([]))
+      }
     } else {
       // Empty initial state
       setDhikrs([])
@@ -123,9 +155,8 @@ export default function Home() {
 
   const checkScheduledDhikrs = () => {
     const now = new Date()
-    // 'lowercase' geçerli bir seçenek değil, bunun yerine 'long' kullanıp sonra küçük harfe çevirelim
-    const currentDay = now.toLocaleDateString("tr-TR", { weekday: "long" }).toLowerCase()
-    console.log(currentDay); 
+    // 'long' kullanıp sonra küçük harfe çevirelim
+    const currentDay = now.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()
     const currentTime = format(now, "HH:mm")
 
     dhikrs.forEach((dhikr) => {
@@ -256,6 +287,19 @@ export default function Home() {
   }
 
   const repeatDhikr = (dhikr: Dhikr) => {
+    // Son 5 saniye içinde aynı zikir için tekrar butonuna basılıp basılmadığını kontrol et
+    const lastRepeatTime = localStorage.getItem(`lastRepeat_${dhikr.id}`)
+    const now = Date.now()
+
+    if (lastRepeatTime && now - Number.parseInt(lastRepeatTime) < 5000) {
+      toast({
+        title: "Yavaş ol!",
+        description: "Bu zikir zaten çekilecekler listesine eklendi.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const newDhikr: Dhikr = {
       id: Date.now().toString(),
       name: dhikr.name,
@@ -269,6 +313,9 @@ export default function Home() {
     }
 
     setDhikrs((prev) => [...prev, newDhikr])
+
+    // Son tekrar zamanını kaydet
+    localStorage.setItem(`lastRepeat_${dhikr.id}`, now.toString())
 
     toast({
       title: "Zikir tekrarlanıyor",
@@ -348,7 +395,24 @@ export default function Home() {
     setSelectedCategory(null)
   }
 
+  const quickAddDhikr = (preset: (typeof commonDhikrs)[0]) => {
+    const newDhikr: Dhikr = {
+      id: Date.now().toString(),
+      name: preset.name,
+      targetCount: preset.count,
+      currentCount: 0,
+      dateCreated: new Date().toISOString(),
+      status: "planned",
+      category: preset.category,
+    }
 
+    setDhikrs((prev) => [...prev, newDhikr])
+
+    toast({
+      title: "Hızlı zikir eklendi",
+      description: `"${preset.name}" zikri eklendi.`,
+    })
+  }
 
   const handleNavigation = (view: string) => {
     setActiveView(view)
@@ -387,6 +451,28 @@ export default function Home() {
     }
   }
 
+  const handleAddSharedDhikrs = (sharedDhikrs: Dhikr[]) => {
+    // Paylaşılan zikirleri çekilecekler listesine ekle
+    const newDhikrs = sharedDhikrs.map((dhikr) => ({
+      ...dhikr,
+      id: Date.now() + Math.random().toString(36).substring(2, 9), // Yeni ID oluştur
+      dateCreated: new Date().toISOString(),
+      status: "planned" as const,
+      currentCount: 0,
+    }))
+
+    setDhikrs((prev) => [...prev, ...newDhikrs])
+
+    toast({
+      title: "Zikirler Eklendi",
+      description: `${newDhikrs.length} zikir başarıyla çekilecekler listesine eklendi.`,
+    })
+  }
+
+  const reloadApp = () => {
+    window.location.reload()
+  }
+
   if (showSuccess) {
     return <SuccessScreen onClose={() => setShowSuccess(false)} />
   }
@@ -415,10 +501,26 @@ export default function Home() {
     return <ScheduleView dhikrs={dhikrs} setDhikrs={setDhikrs} onClose={() => handleNavigation("home")} />
   }
 
+  if (showShare) {
+    return (
+      <ShareView
+        dhikrs={dhikrs}
+        onAddDhikrs={handleAddSharedDhikrs}
+        onClose={() => setShowShare(false)}
+        onReload={reloadApp}
+      />
+    )
+  }
+
   return (
     <div className={`flex ${!isMobile ? "flex-row" : "flex-col"} min-h-screen`}>
       {!isMobile && (
-        <Sidebar activeView={activeView} onNavigate={handleNavigation} onAddDhikr={() => setShowAddForm(true)} />
+        <Sidebar
+          activeView={activeView}
+          onNavigate={handleNavigation}
+          onAddDhikr={() => setShowAddForm(true)}
+          onShare={() => setShowShare(true)} // Yeni prop
+        />
       )}
 
       <div className={`${!isMobile ? "flex-1 ml-64" : "w-full"} pb-20`}>
@@ -448,6 +550,10 @@ export default function Home() {
               )}
               <ModeToggle />
             </div>
+          </div>
+
+          <div className="text-center mb-6">
+            <p className="text-sm text-muted-foreground">Ömür boyu ücretsiz</p>
           </div>
 
           {streak > 0 && (
@@ -516,6 +622,38 @@ export default function Home() {
               </PopoverContent>
             </Popover>
 
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 border-dashed">
+                  {selectedCategory || "Kategori Seç"}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[40vh]">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Kategori Seçin</SheetTitle>
+                  <SheetDescription>Zikirleri kategoriye göre filtrelemek için bir kategori seçin</SheetDescription>
+                </SheetHeader>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={selectedCategory === null ? "default" : "outline"}
+                    onClick={() => setSelectedCategory(null)}
+                    className="justify-start"
+                  >
+                    Tümü
+                  </Button>
+                  {categories.map((category) => (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? "default" : "outline"}
+                      onClick={() => setSelectedCategory(category)}
+                      className="justify-start"
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
 
             {(selectedDate || searchTerm || selectedCategory) && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -524,6 +662,38 @@ export default function Home() {
               </Button>
             )}
           </div>
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full mb-4">
+                <Plus className="mr-2 h-4 w-4" /> Hızlı Zikir Ekle
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[50vh]">
+              <SheetHeader className="mb-4">
+                <SheetTitle>Hızlı Zikir Ekle</SheetTitle>
+                <SheetDescription>Sık kullanılan zikirlerden birini seçin veya özel zikir ekleyin</SheetDescription>
+              </SheetHeader>
+              <div className="grid grid-cols-1 gap-2">
+                {commonDhikrs.map((dhikr) => (
+                  <Button
+                    key={dhikr.name}
+                    variant="outline"
+                    onClick={() => {
+                      quickAddDhikr(dhikr)
+                    }}
+                    className="justify-between"
+                  >
+                    <span>{dhikr.name}</span>
+                    <Badge variant="secondary">{dhikr.count}</Badge>
+                  </Button>
+                ))}
+                <Button onClick={() => setShowAddForm(true)} className="mt-2">
+                  <Plus className="mr-2 h-4 w-4" /> Özel Zikir Ekle
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
 
           <Tabs defaultValue="recent" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -721,7 +891,12 @@ export default function Home() {
           </Tabs>
 
           {isMobile && (
-            <BottomNav activeView={activeView} onNavigate={handleNavigation} onAddDhikr={() => setShowAddForm(true)} />
+            <BottomNav
+              activeView={activeView}
+              onNavigate={handleNavigation}
+              onAddDhikr={() => setShowAddForm(true)}
+              onShare={() => setShowShare(true)} // Yeni prop
+            />
           )}
 
           {!isMobile && (

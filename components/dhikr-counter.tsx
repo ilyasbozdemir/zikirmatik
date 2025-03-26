@@ -7,6 +7,7 @@ import { ArrowLeft, RotateCcw, Volume2, VolumeX } from "lucide-react"
 import type { Dhikr } from "@/app/page"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { formatNumber } from "@/lib/format-number"
 
 interface DhikrCounterProps {
   dhikr: Dhikr
@@ -34,7 +35,7 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
     if (count > 0 && count % 10 === 0) {
       toast({
         title: "İlerleme",
-        description: `${count} zikir tamamlandı. ${dhikr.targetCount - count} zikir kaldı.`,
+        description: `${formatNumber(count)} zikir tamamlandı. ${formatNumber(dhikr.targetCount - count)} zikir kaldı.`,
       })
     }
   }, [count, dhikr.id, dhikr.targetCount, onUpdate, toast])
@@ -153,7 +154,7 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
-          <p className="text-muted-foreground">Hedef: {dhikr.targetCount}</p>
+          <p className="text-muted-foreground">Hedef: {formatNumber(dhikr.targetCount)}</p>
           {dhikr.category && (
             <div className="mt-2">
               <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
@@ -178,8 +179,8 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <div className="text-7xl font-bold mb-2">{count}</div>
-          <p className="text-muted-foreground">Kalan: {dhikr.targetCount - count}</p>
+          <div className="text-7xl font-bold mb-2">{formatNumber(count)}</div>
+          <p className="text-muted-foreground">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
           <p className="text-xs text-muted-foreground mt-2">Çift tıklama: +2 • Üçlü tıklama: +5</p>
         </motion.div>
 

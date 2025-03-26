@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { Home, BarChart3, Clock, Settings, Info, Plus,Github } from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle";
-
+import { Button } from "@/components/ui/button"
+import { Home, BarChart3, Clock, Settings, Info, Plus, Share2 } from "lucide-react"
+import { ModeToggle } from "@/components/mode-toggle"
 
 interface SidebarProps {
-  activeView: string;
-  onNavigate: (view: string) => void;
-  onAddDhikr: () => void;
+  activeView: string
+  onNavigate: (view: string) => void
+  onAddDhikr: () => void
+  onShare: () => void
 }
 
-export function Sidebar({ activeView, onNavigate, onAddDhikr }: SidebarProps) {
+export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare }: SidebarProps) {
   return (
     <div className="fixed left-0 top-0 h-full w-64 border-r bg-background p-4 flex flex-col">
       <div className="flex items-center justify-between mb-8">
@@ -47,6 +47,11 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr }: SidebarProps) {
           Planlama
         </Button>
 
+        <Button variant="ghost" className="w-full justify-start" onClick={onShare}>
+          <Share2 className="mr-2 h-5 w-5" />
+          Paylaş ve Aktar
+        </Button>
+
         <Button
           variant={activeView === "help" ? "default" : "ghost"}
           className="w-full justify-start"
@@ -76,17 +81,8 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr }: SidebarProps) {
       <div className="mt-4 text-center">
         <p className="text-sm text-muted-foreground">v1.0.0-rc</p>
         <p className="text-xs text-muted-foreground mt-1">Ömür boyu ücretsiz</p>
-        <p className="text-xs text-muted-foreground mt-2">
-          <a
-            href="https://github.com/ilyasbozdemir/zikirmatik"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
-          >
-            <span>GitHub Reposu</span>
-          </a>
-        </p>
       </div>
     </div>
-  );
+  )
 }
+

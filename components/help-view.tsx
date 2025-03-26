@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Play, RotateCcw, Calendar, Search, Trash2, BarChart3, Clock } from "lucide-react"
+import { ArrowLeft, Plus, Play, RotateCcw, Calendar, Search, Trash2, BarChart3, Clock, Github } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface HelpViewProps {
@@ -9,6 +9,10 @@ interface HelpViewProps {
 }
 
 export function HelpView({ onClose }: HelpViewProps) {
+  const openGithub = () => {
+    window.open("https://github.com/ilyasbozdemir/zikirmatik", "_blank")
+  }
+
   return (
     <div className="container max-w-md mx-auto p-4">
       <div className="flex items-center mb-6">
@@ -42,7 +46,7 @@ export function HelpView({ onClose }: HelpViewProps) {
                 <div>
                   <p className="font-medium">Zikir Ekle</p>
                   <p className="text-sm text-muted-foreground">
-                    Yeni zikir eklemek için sağ alttaki + butonuna tıklayın veya özelliğini kullanın.
+                    Yeni zikir eklemek için sağ alttaki + butonuna tıklayın veya hızlı zikir ekleme özelliğini kullanın.
                   </p>
                 </div>
               </li>
@@ -146,11 +150,31 @@ export function HelpView({ onClose }: HelpViewProps) {
           <CardContent className="p-4">
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• Günlük seri oluşturmak için her gün en az bir zikir tamamlayın.</li>
+              <li>• Hızlı zikir ekle özelliği ile yaygın zikirleri kolayca ekleyebilirsiniz.</li>
               <li>• Kategorilere göre filtreleme yaparak belirli türdeki zikirleri görebilirsiniz.</li>
               <li>• Zikir çekerken ses efektlerini açıp kapatabilirsiniz.</li>
               <li>• İstatistikler bölümünden ilerlemenizi takip edebilirsiniz.</li>
               <li>• Önemli verilerinizi kaybetmemek için ayarlar bölümünden yedekleme yapabilirsiniz.</li>
             </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-lg">Açık Kaynak</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Zikirmatik uygulaması açık kaynak kodlu bir projedir. Katkıda bulunmak, hata bildirmek veya önerilerde
+              bulunmak için GitHub repository'mizi ziyaret edebilirsiniz.
+            </p>
+            <Button variant="outline" className="w-full" onClick={openGithub}>
+              <Github className="mr-2 h-4 w-4" />
+              GitHub'da Görüntüle
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Sorunlar için GitHub üzerinden issue açabilir, geliştirmeler için pull request gönderebilirsiniz.
+            </p>
           </CardContent>
         </Card>
       </div>
