@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, BarChart3, Clock, Settings, Info, Plus, Share2 } from "lucide-react"
+import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 
 interface SidebarProps {
@@ -9,9 +9,10 @@ interface SidebarProps {
   onNavigate: (view: string) => void
   onAddDhikr: () => void
   onShare: () => void
+  onDhikrLibrary: () => void
 }
 
-export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare }: SidebarProps) {
+export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare, onDhikrLibrary }: SidebarProps) {
   return (
     <div className="fixed left-0 top-0 h-full w-64 border-r bg-background p-4 flex flex-col">
       <div className="flex items-center justify-between mb-8">
@@ -52,6 +53,11 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare }: Sidebar
           Paylaş ve Aktar
         </Button>
 
+        <Button variant="ghost" className="w-full justify-start" onClick={onDhikrLibrary}>
+          <BookOpen className="mr-2 h-5 w-5" />
+          Zikir Kütüphanesi
+        </Button>
+
         <Button
           variant={activeView === "help" ? "default" : "ghost"}
           className="w-full justify-start"
@@ -79,7 +85,7 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare }: Sidebar
       </div>
 
       <div className="mt-4 text-center">
-        <p className="text-sm text-muted-foreground">v1.0.0-rc</p>
+        <p className="text-sm text-muted-foreground">v1.0.0</p>
         <p className="text-xs text-muted-foreground mt-1">Ömür boyu ücretsiz</p>
       </div>
     </div>

@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Moon, Sun, Download, Trash2, Github, Share2 } from "lucide-react"
+import { ArrowLeft, Moon, Sun, Download, Trash2, Github, Share2, Volume2, Vibrate } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -85,6 +85,42 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
     window.open("https://github.com/ilyasbozdemir/zikirmatik", "_blank")
   }
 
+  const testSound = () => {
+    try {
+      const audio = new Audio("/click.mp3")
+      audio.volume = 0.5
+      audio.play()
+
+      toast({
+        title: "Ses Testi",
+        description: "Ses çalışıyor.",
+      })
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "Ses çalınırken bir hata oluştu.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const testVibration = () => {
+    if ("vibrate" in navigator) {
+      navigator.vibrate([100, 50, 100])
+
+      toast({
+        title: "Titreşim Testi",
+        description: "Titreşim çalışıyor.",
+      })
+    } else {
+      toast({
+        title: "Hata",
+        description: "Cihazınız titreşim özelliğini desteklemiyor.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="container max-w-md mx-auto p-4">
       <div className="flex items-center mb-6">
@@ -119,24 +155,41 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
 
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-lg">Bildirimler</CardTitle>
+            <CardTitle className="text-lg">Bildirimler ve Geri Bildirim</CardTitle>
+            <CardDescription className="text-sm">
+              Zikir çekerken ses ve titreşim ayarlarını yapılandırın
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="sound">Ses Efektleri</Label>
-                  <p className="text-sm text-muted-foreground">Zikir çekerken ses efektlerini etkinleştir</p>
+                  <Label htmlFor="sound" className="flex items-center">
+                    <Volume2 className="h-4 w-4 mr-2" /> Ses Efektleri
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Zikir çekerken tıklama sesi çalar</p>
                 </div>
-                <Switch id="sound" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
+                <div className="flex items-center space-x-2">
+                  <Switch id="sound" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
+                  <Button variant="outline" size="sm" onClick={testSound} disabled={!soundEnabled}>
+                    Test Et
+                  </Button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="vibration">Titreşim</Label>
-                  <p className="text-sm text-muted-foreground">Zikir çekerken titreşimi etkinleştir</p>
+                  <Label htmlFor="vibration" className="flex items-center">
+                    <Vibrate className="h-4 w-4 mr-2" /> Titreşim
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Zikir çekerken cihazınız titreşir</p>
                 </div>
-                <Switch id="vibration" checked={vibrationEnabled} onCheckedChange={setVibrationEnabled} />
+                <div className="flex items-center space-x-2">
+                  <Switch id="vibration" checked={vibrationEnabled} onCheckedChange={setVibrationEnabled} />
+                  <Button variant="outline" size="sm" onClick={testVibration} disabled={!vibrationEnabled}>
+                    Test Et
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -186,7 +239,7 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
             <CardTitle className="text-lg">Hakkında</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Zikirmatik v1.0.0-rc</p>
+            <p className="text-sm text-muted-foreground">Zikirmatik v1.0.0</p>
             <p className="text-sm text-muted-foreground mt-1">© 2023 Tüm hakları saklıdır.</p>
             <p className="text-sm text-primary mt-2 font-medium">Ömür boyu ücretsiz</p>
 

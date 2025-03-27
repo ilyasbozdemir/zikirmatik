@@ -2,15 +2,18 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Copy, Check } from "lucide-react"
 import type { Dhikr } from "@/app/page"
 import { motion } from "framer-motion"
-import { commonDhikrs } from "@/app/page"
+import { commonDhikrs } from "@/lib/arabic-dhikrs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 
 interface AddDhikrFormProps {
   onAdd: (dhikr: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">) => void
@@ -24,6 +27,30 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
   const [category, setCategory] = useState<string>("Tesbih")
   const [customCategory, setCustomCategory] = useState("")
   const [showCustomCategory, setShowCustomCategory] = useState(false)
+  const [useArabicText, setUseArabicText] = useState(false)
+  const [arabicText, setArabicText] = useState("")
+  const [translation, setTranslation] = useState("")
+  const [clipboardText, setClipboardText] = useState<string | null>(null)
+  const [clipboardCopied, setClipboardCopied] = useState(false)
+  const { toast } = useToast()
+
+  // Check clipboard for text
+  useEffect(() => {
+    const checkClipboard = async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText()
+          if (text && text.trim()) {
+            setClipboardText(text)
+          }
+        }
+      } catch (error) {
+        console.error("Error reading clipboard:", error)
+      }
+    }
+
+    checkClipboard()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +59,8 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
         name: name.trim(),
         targetCount,
         category: showCustomCategory ? customCategory : category,
+        arabicText: useArabicText ? arabicText : undefined,
+        translation: translation || undefined,
       })
     }
   }
@@ -40,6 +69,8 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
     if (value === "custom") {
       setCustomInput(true)
       setName("")
+      setArabicText("")
+      setTranslation("")
       return
     }
 
@@ -50,6 +81,9 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
       setTargetCount(selected.count)
       setCategory(selected.category || "Tesbih")
       setShowCustomCategory(false)
+      setArabicText("")
+      setTranslation("")
+      setUseArabicText(false)
     }
   }
 
@@ -60,6 +94,30 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
       setShowCustomCategory(false)
       setCategory(value)
     }
+  }
+
+  const pasteFromClipboard = (field: "name" | "arabicText" | "translation") => {
+    if (!clipboardText) return
+
+    // Determine if the clipboard text is likely Arabic
+    const isArabic = /[\u0600-\u06FF]/.test(clipboardText)
+
+    if (field === "name") {
+      setName(clipboardText)
+    } else if (field === "arabicText") {
+      setArabicText(clipboardText)
+    } else if (field === "translation") {
+      setTranslation(clipboardText)
+    }
+
+    setClipboardCopied(true)
+
+    toast({
+      title: "Metin Yapıştırıldı",
+      description: isArabic ? "Arapça metin yapıştırıldı." : "Metin yapıştırıldı.",
+    })
+
+    setTimeout(() => setClipboardCopied(false), 2000)
   }
 
   // Get unique categories from common dhikrs
@@ -100,15 +158,97 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="name">Zikir Adı</Label>
-          <Input
-            id="name"
-            placeholder="Örn: Sübhanallah"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={!customInput}
-            required
-          />
+          <div className="flex items-center space-x-2">
+            <Input
+              id="name"
+              placeholder="Örn: Sübhanallah"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!customInput}
+              required
+              className="flex-1"
+            />
+            {clipboardText && customInput && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="flex-shrink-0"
+                onClick={() => pasteFromClipboard("name")}
+                title="Panodan Yapıştır"
+              >
+                {clipboardCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            )}
+          </div>
         </div>
+
+        {customInput && (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="useArabicText"
+              checked={useArabicText}
+              onCheckedChange={setUseArabicText}
+              disabled={!customInput}
+            />
+            <Label htmlFor="useArabicText">Arapça metin ekle</Label>
+          </div>
+        )}
+
+        {customInput && useArabicText && (
+          <div className="space-y-2">
+            <Label htmlFor="arabicText">Arapça Metin</Label>
+            <div className="flex items-center space-x-2">
+              <Textarea
+                id="arabicText"
+                placeholder="Arapça metni girin"
+                value={arabicText}
+                onChange={(e) => setArabicText(e.target.value)}
+                className="font-arabic text-right flex-1"
+                dir="rtl"
+              />
+              {clipboardText && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={() => pasteFromClipboard("arabicText")}
+                  title="Panodan Yapıştır"
+                >
+                  {clipboardCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {customInput && useArabicText && (
+          <div className="space-y-2">
+            <Label htmlFor="translation">Türkçe Anlamı (İsteğe Bağlı)</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="translation"
+                placeholder="Türkçe anlamını girin"
+                value={translation}
+                onChange={(e) => setTranslation(e.target.value)}
+                className="flex-1"
+              />
+              {clipboardText && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={() => pasteFromClipboard("translation")}
+                  title="Panodan Yapıştır"
+                >
+                  {clipboardCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="category">Kategori</Label>

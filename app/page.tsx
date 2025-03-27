@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Plus, Play, Trash2, RotateCcw, Calendar, X, BarChart3, Info, Clock } from "lucide-react"
+import { Plus, Play, Trash2, RotateCcw, Calendar, X, BarChart3, Info, Clock, BookOpen } from "lucide-react"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { tr } from "date-fns/locale"
 import { DhikrCounter } from "@/components/dhikr-counter"
@@ -37,6 +37,9 @@ import { ScheduleView } from "@/components/schedule-view"
 import { Sidebar } from "@/components/sidebar"
 import { BottomNav } from "@/components/bottom-nav"
 import { ShareView } from "@/components/share-view"
+import { ArabicDhikrView } from "@/components/arabic-dhikr-view"
+import { AdvancedScheduleView } from "@/components/advanced-schedule-view"
+import { DhikrLibrary } from "@/components/dhikr-library"
 
 // Define the Dhikr type
 export type Dhikr = {
@@ -50,6 +53,17 @@ export type Dhikr = {
   category?: string
   scheduledDays?: string[] // days of week: "monday", "tuesday", etc.
   scheduledTime?: string // HH:MM format
+  scheduledDates?: string[] // specific dates for custom scheduling
+  scheduleType?: "daily" | "weekly" | "monthly" | "custom" | "one-time"
+  scheduleSettings?: {
+    repeatEvery: number
+    repeatInterval: "day" | "week" | "month" | "year"
+    startDate: string
+    endDate?: string
+  }
+  arabicText?: string
+  transliteration?: string
+  translation?: string
 }
 
 // Common Islamic dhikrs in Turkish
@@ -83,6 +97,9 @@ export default function Home() {
   const { theme, setTheme } = useTheme()
   const isMobile = useMobile()
   const [showShare, setShowShare] = useState(false)
+  const [showArabicDhikr, setShowArabicDhikr] = useState(false)
+  const [showAdvancedSchedule, setShowAdvancedSchedule] = useState(false)
+  const [showDhikrLibrary, setShowDhikrLibrary] = useState(false)
 
   // Load dhikrs from localStorage on component mount
   useEffect(() => {
@@ -498,7 +515,14 @@ export default function Home() {
   }
 
   if (showSchedule) {
-    return <ScheduleView dhikrs={dhikrs} setDhikrs={setDhikrs} onClose={() => handleNavigation("home")} />
+    return (
+      <ScheduleView
+        dhikrs={dhikrs}
+        setDhikrs={setDhikrs}
+        onClose={() => handleNavigation("home")}
+        onAdvancedSchedule={() => setShowAdvancedSchedule(true)}
+      />
+    )
   }
 
   if (showShare) {
@@ -512,6 +536,18 @@ export default function Home() {
     )
   }
 
+  if (showArabicDhikr) {
+    return <ArabicDhikrView onClose={() => setShowArabicDhikr(false)} onAddDhikr={addNewDhikr} />
+  }
+
+  if (showAdvancedSchedule) {
+    return <AdvancedScheduleView dhikrs={dhikrs} setDhikrs={setDhikrs} onClose={() => setShowAdvancedSchedule(false)} />
+  }
+
+  if (showDhikrLibrary) {
+    return <DhikrLibrary onClose={() => setShowDhikrLibrary(false)} onAddDhikr={addNewDhikr} />
+  }
+
   return (
     <div className={`flex ${!isMobile ? "flex-row" : "flex-col"} min-h-screen`}>
       {!isMobile && (
@@ -520,6 +556,8 @@ export default function Home() {
           onNavigate={handleNavigation}
           onAddDhikr={() => setShowAddForm(true)}
           onShare={() => setShowShare(true)} // Yeni prop
+          onArabicDhikr={() => setShowArabicDhikr(true)}
+          onDhikrLibrary={() => setShowDhikrLibrary(true)}
         />
       )}
 
@@ -528,7 +566,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Zikirmatik</h1>
             <div className="flex items-center space-x-2">
-              {isMobile && (
+              {isMobile ? (
                 <>
                   <Button
                     variant="ghost"
@@ -546,9 +584,21 @@ export default function Home() {
                   >
                     <BarChart3 className="h-5 w-5" />
                   </Button>
+                  <ModeToggle />
                 </>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDhikrLibrary(true)}
+                    className="text-muted-foreground"
+                  >
+                    <BookOpen className="h-5 w-5 mr-2" /> Zikir Kütüphanesi
+                  </Button>
+                  <ModeToggle />
+                </div>
               )}
-              <ModeToggle />
             </div>
           </div>
 
@@ -895,7 +945,9 @@ export default function Home() {
               activeView={activeView}
               onNavigate={handleNavigation}
               onAddDhikr={() => setShowAddForm(true)}
-              onShare={() => setShowShare(true)} // Yeni prop
+              onShare={() => setShowShare(true)}
+              onArabicDhikr={() => setShowArabicDhikr(true)}
+              onDhikrLibrary={() => setShowDhikrLibrary(true)}
             />
           )}
 

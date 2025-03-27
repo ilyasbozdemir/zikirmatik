@@ -4,13 +4,12 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Calendar, Clock, Check, Info, FileText } from "lucide-react"
+import { ArrowLeft, Plus, Calendar, Clock, Check, FileText } from "lucide-react"
 import type { Dhikr } from "@/app/page"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { commonDhikrs } from "@/app/page"
 import { Input } from "@/components/ui/input"
@@ -21,9 +20,10 @@ interface ScheduleViewProps {
   dhikrs: Dhikr[]
   setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>
   onClose: () => void
+  onAdvancedSchedule: () => void
 }
 
-export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) {
+export function ScheduleView({ dhikrs, setDhikrs, onClose, onAdvancedSchedule }: ScheduleViewProps) {
   const [selectedDhikr, setSelectedDhikr] = useState<Dhikr | null>(null)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [selectedTime, setSelectedTime] = useState("08:00")
@@ -186,21 +186,12 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose }: ScheduleViewProps) 
       <div className="space-y-6">
         <Card>
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-lg flex items-center justify-between">
-              Planlı Zikirler
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Planlı zikirler, seçtiğiniz günlerde ve saatte size hatırlatılır.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Planlı Zikirler</CardTitle>
+              <Button variant="outline" size="sm" onClick={onAdvancedSchedule}>
+                <Clock className="mr-2 h-4 w-4" /> Gelişmiş
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-4">
             {scheduledDhikrs.length > 0 ? (

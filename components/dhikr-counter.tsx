@@ -154,6 +154,11 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
+          {dhikr.arabicText && <p className="font-arabic text-2xl mb-2 leading-relaxed">{dhikr.arabicText}</p>}
+          {dhikr.transliteration && dhikr.transliteration !== dhikr.name && (
+            <p className="text-sm text-muted-foreground mb-1">{dhikr.transliteration}</p>
+          )}
+          {dhikr.translation && <p className="text-xs text-muted-foreground mb-2">{dhikr.translation}</p>}
           <p className="text-muted-foreground">Hedef: {formatNumber(dhikr.targetCount)}</p>
           {dhikr.category && (
             <div className="mt-2">
