@@ -2,12 +2,27 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Moon, Sun, Download, Trash2, Github, Share2, Volume2, Vibrate } from "lucide-react"
+import {
+  ArrowLeft,
+  Moon,
+  Sun,
+  Download,
+  Trash2,
+  Github,
+  Share2,
+  Volume2,
+  Vibrate,
+  Smartphone,
+  RefreshCw,
+} from "lucide-react"
 import { useTheme } from "next-themes"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
+import { InstallPWAButton, usePWA } from "@/components/pwa-manager"
+import { useAudioManager } from "@/components/audio-manager"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,28 +42,21 @@ interface SettingsViewProps {
 
 export function SettingsView({ onClose, onShare }: SettingsViewProps) {
   const { theme, setTheme } = useTheme()
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem("dhikrSoundEnabled")
-    return saved !== null ? saved === "true" : true
-  })
   const [vibrationEnabled, setVibrationEnabled] = useState(() => {
-    const saved = localStorage.getItem("dhikrVibrationEnabled")
-    return saved !== null ? saved === "true" : true
+    return getStorageItem("dhikrVibrationEnabled", true)
   })
   const { toast } = useToast()
+  const { updateAvailable, updateApp } = usePWA()
+  const { soundEnabled, setSoundEnabled, testSound } = useAudioManager()
 
   useEffect(() => {
-    localStorage.setItem("dhikrSoundEnabled", soundEnabled.toString())
-  }, [soundEnabled])
-
-  useEffect(() => {
-    localStorage.setItem("dhikrVibrationEnabled", vibrationEnabled.toString())
+    setStorageItem("dhikrVibrationEnabled", vibrationEnabled)
   }, [vibrationEnabled])
 
   const exportData = () => {
     try {
-      const dhikrs = localStorage.getItem("dhikrs") || "[]"
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(dhikrs)
+      const dhikrs = getStorageItem("dhikrs", [])
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dhikrs))
       const downloadAnchorNode = document.createElement("a")
       downloadAnchorNode.setAttribute("href", dataStr)
       downloadAnchorNode.setAttribute("download", "zikirmatik_yedek.json")
@@ -70,7 +78,11 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
   }
 
   const clearAllData = () => {
-    localStorage.removeItem("dhikrs")
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("dhikrs")
+      localStorage.removeItem("customDhikrs")
+      localStorage.removeItem("dhikrCollections")
+    }
 
     toast({
       title: "Tüm veriler silindi",
@@ -85,20 +97,18 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
     window.open("https://github.com/ilyasbozdemir/zikirmatik", "_blank")
   }
 
-  const testSound = () => {
-    try {
-      const audio = new Audio("/click.mp3")
-      audio.volume = 0.5
-      audio.play()
+  const handleTestSound = () => {
+    const result = testSound()
 
+    if (result.success) {
       toast({
         title: "Ses Testi",
         description: "Ses çalışıyor.",
       })
-    } catch (error) {
+    } else {
       toast({
-        title: "Hata",
-        description: "Ses çalınırken bir hata oluştu.",
+        title: "Ses Hatası",
+        description: result.message || "Ses çalınamadı.",
         variant: "destructive",
       })
     }
@@ -131,6 +141,25 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
       </div>
 
       <div className="space-y-6">
+        {updateAvailable && (
+          <Card className="border-green-500 dark:border-green-400">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <RefreshCw className="h-5 w-5 mr-2 text-green-500" /> Güncelleme Mevcut
+              </CardTitle>
+              <CardDescription>
+                Zikirmatik uygulaması için yeni bir güncelleme mevcut. Yeni özellikleri ve iyileştirmeleri kullanmak
+                için güncelleyin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              <Button className="w-full" onClick={updateApp}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Güncellemeyi Yükle
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-lg">Görünüm</CardTitle>
@@ -171,7 +200,7 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch id="sound" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
-                  <Button variant="outline" size="sm" onClick={testSound} disabled={!soundEnabled}>
+                  <Button variant="outline" size="sm" onClick={handleTestSound} disabled={!soundEnabled}>
                     Test Et
                   </Button>
                 </div>
@@ -190,6 +219,28 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
                     Test Et
                   </Button>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-lg">Uygulama</CardTitle>
+            <CardDescription className="text-sm">
+              Zikirmatik uygulamasını cihazınıza kurabilir ve çevrimdışı kullanabilirsiniz
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center">
+                    <Smartphone className="h-4 w-4 mr-2" /> Uygulamayı Kur
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Zikirmatik'i ana ekranınıza ekleyin</p>
+                </div>
+                <InstallPWAButton />
               </div>
             </div>
           </CardContent>
@@ -239,7 +290,7 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
             <CardTitle className="text-lg">Hakkında</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Zikirmatik v1.0.0</p>
+            <p className="text-sm text-muted-foreground">Zikirmatik v1.1.0</p>
             <p className="text-sm text-muted-foreground mt-1">© 2023 Tüm hakları saklıdır.</p>
             <p className="text-sm text-primary mt-2 font-medium">Ömür boyu ücretsiz</p>
 

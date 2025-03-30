@@ -2,7 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Copy, Check, Edit, Trash2, Save, Volume2, VolumeX, BookOpen, Search, X } from "lucide-react"
+import {
+  ArrowLeft,
+  Plus,
+  Copy,
+  Check,
+  Edit,
+  Trash2,
+  Save,
+  Volume2,
+  VolumeX,
+  BookOpen,
+  Search,
+  X,
+  FolderPlus,
+  Folder,
+  Play,
+  List,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -25,9 +42,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+// DhikrLibraryProps arayüzünü güncelleyelim
 interface DhikrLibraryProps {
   onClose: () => void
   onAddDhikr: (dhikr: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">) => void
+  onAddDhikrSeries: (dhikrs: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[]) => void
 }
 
 type CustomDhikr = {
@@ -41,7 +60,17 @@ type CustomDhikr = {
   audio?: string
 }
 
-export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
+type DhikrCollection = {
+  id: string
+  name: string
+  description: string
+  dhikrs: string[] // CustomDhikr id'leri veya arabicDhikrs indeksleri
+  type: "custom" | "arabic" | "mixed"
+  category?: string
+  dateCreated: string
+}
+
+export function DhikrLibrary({ onClose, onAddDhikr, onAddDhikrSeries }: DhikrLibraryProps) {
   const [activeTab, setActiveTab] = useState("collection")
   const [searchTerm, setSearchTerm] = useState("")
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -50,9 +79,13 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
   })
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null)
   const [customDhikrs, setCustomDhikrs] = useState<CustomDhikr[]>([])
+  const [collections, setCollections] = useState<DhikrCollection[]>([])
   const [editingDhikr, setEditingDhikr] = useState<CustomDhikr | null>(null)
+  const [editingCollection, setEditingCollection] = useState<DhikrCollection | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
+  const [isAddingCollection, setIsAddingCollection] = useState(false)
   const [clipboardText, setClipboardText] = useState<string | null>(null)
+  const [selectedDhikrsForCollection, setSelectedDhikrsForCollection] = useState<string[]>([])
   const { toast } = useToast()
 
   // Load custom dhikrs from localStorage
@@ -64,6 +97,16 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
       } catch (error) {
         console.error("Error parsing saved custom dhikrs:", error)
         setCustomDhikrs([])
+      }
+    }
+
+    const savedCollections = localStorage.getItem("dhikrCollections")
+    if (savedCollections) {
+      try {
+        setCollections(JSON.parse(savedCollections))
+      } catch (error) {
+        console.error("Error parsing saved dhikr collections:", error)
+        setCollections([])
       }
     }
   }, [])
@@ -90,6 +133,11 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
   useEffect(() => {
     localStorage.setItem("customDhikrs", JSON.stringify(customDhikrs))
   }, [customDhikrs])
+
+  // Save collections to localStorage
+  useEffect(() => {
+    localStorage.setItem("dhikrCollections", JSON.stringify(collections))
+  }, [collections])
 
   const playAudio = (audioPath: string | undefined) => {
     if (!soundEnabled || !audioPath) return
@@ -181,6 +229,14 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
   const deleteCustomDhikr = (id: string) => {
     setCustomDhikrs((prev) => prev.filter((d) => d.id !== id))
 
+    // Koleksiyonlardan da bu zikri kaldır
+    setCollections((prev) =>
+      prev.map((collection) => ({
+        ...collection,
+        dhikrs: collection.dhikrs.filter((dhikrId) => dhikrId !== id),
+      })),
+    )
+
     toast({
       title: "Zikir Silindi",
       description: "Özel zikir kütüphaneden silindi.",
@@ -217,6 +273,151 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
     }
   }
 
+  const addNewCollection = () => {
+    if (!editingCollection) return
+
+    if (!editingCollection.name.trim()) {
+      toast({
+        title: "Hata",
+        description: "Lütfen koleksiyon adı girin.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (editingCollection.dhikrs.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Lütfen koleksiyona en az bir zikir ekleyin.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const newCollection: DhikrCollection = {
+      ...editingCollection,
+      id: Date.now().toString(),
+      dateCreated: new Date().toISOString(),
+    }
+
+    setCollections((prev) => [...prev, newCollection])
+    setEditingCollection(null)
+    setIsAddingCollection(false)
+    setSelectedDhikrsForCollection([])
+
+    toast({
+      title: "Koleksiyon Eklendi",
+      description: `"${editingCollection.name}" koleksiyonu başarıyla oluşturuldu.`,
+    })
+  }
+
+  const updateCollection = () => {
+    if (!editingCollection) return
+
+    if (!editingCollection.name.trim()) {
+      toast({
+        title: "Hata",
+        description: "Lütfen koleksiyon adı girin.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (editingCollection.dhikrs.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Lütfen koleksiyona en az bir zikir ekleyin.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCollections((prev) =>
+      prev.map((collection) => (collection.id === editingCollection.id ? editingCollection : collection)),
+    )
+
+    setEditingCollection(null)
+    setSelectedDhikrsForCollection([])
+
+    toast({
+      title: "Koleksiyon Güncellendi",
+      description: `"${editingCollection.name}" koleksiyonu başarıyla güncellendi.`,
+    })
+  }
+
+  const deleteCollection = (id: string) => {
+    setCollections((prev) => prev.filter((collection) => collection.id !== id))
+
+    toast({
+      title: "Koleksiyon Silindi",
+      description: "Koleksiyon başarıyla silindi.",
+    })
+  }
+
+  const toggleDhikrSelection = (dhikrId: string) => {
+    if (selectedDhikrsForCollection.includes(dhikrId)) {
+      setSelectedDhikrsForCollection((prev) => prev.filter((id) => id !== dhikrId))
+    } else {
+      setSelectedDhikrsForCollection((prev) => [...prev, dhikrId])
+    }
+  }
+
+  const startEditingCollection = (collection: DhikrCollection) => {
+    setEditingCollection({ ...collection })
+    setSelectedDhikrsForCollection([...collection.dhikrs])
+  }
+
+  // addCollectionToList fonksiyonunu güncelleyelim
+  const addCollectionToList = (collection: DhikrCollection) => {
+    // Koleksiyondaki zikirleri çekilecekler listesine ekle
+    const dhikrsToAdd: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[] = []
+
+    collection.dhikrs.forEach((dhikrId) => {
+      // Özel zikirlerden ara
+      const customDhikr = customDhikrs.find((d) => d.id === dhikrId)
+      if (customDhikr) {
+        dhikrsToAdd.push({
+          name: customDhikr.transliteration || customDhikr.name,
+          targetCount: customDhikr.count,
+          category: customDhikr.category,
+          arabicText: customDhikr.arabicText,
+          transliteration: customDhikr.transliteration,
+          translation: customDhikr.translation,
+        })
+        return
+      }
+
+      // Arapça zikirlerden ara (id'yi indeks olarak kullan)
+      const arabicIndex = Number.parseInt(dhikrId)
+      if (!isNaN(arabicIndex) && arabicIndex >= 0 && arabicIndex < arabicDhikrs.length) {
+        const arabicDhikr = arabicDhikrs[arabicIndex]
+        dhikrsToAdd.push({
+          name: arabicDhikr.transliteration,
+          targetCount: arabicDhikr.count,
+          category: arabicDhikr.category,
+          arabicText: arabicDhikr.name,
+          transliteration: arabicDhikr.transliteration,
+          translation: arabicDhikr.translation,
+        })
+      }
+    })
+
+    if (dhikrsToAdd.length > 0) {
+      onAddDhikrSeries(dhikrsToAdd)
+
+      toast({
+        title: "Koleksiyon Eklendi",
+        description: `"${collection.name}" koleksiyonundaki ${dhikrsToAdd.length} zikir çekilecekler listesine eklendi.`,
+      })
+    } else {
+      toast({
+        title: "Hata",
+        description: "Koleksiyonda eklenecek zikir bulunamadı.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const filteredArabicDhikrs = arabicDhikrs.filter(
     (dhikr) =>
       dhikr.name.includes(searchTerm) ||
@@ -231,6 +432,12 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
       dhikr.translation?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  const filteredCollections = collections.filter(
+    (collection) =>
+      collection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      collection.description.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
   return (
     <div className="container max-w-md mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
@@ -240,9 +447,28 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
           </Button>
           <h1 className="text-2xl font-bold ml-2">Zikir Kütüphanesi</h1>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)}>
-          {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)}>
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setIsAddingCollection(true)
+              setEditingCollection({
+                id: "",
+                name: "",
+                description: "",
+                dhikrs: [],
+                type: "mixed",
+                dateCreated: "",
+              })
+            }}
+          >
+            <FolderPlus className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 relative">
@@ -285,7 +511,7 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
         </div>
       </div>
 
-      {isAddingNew || editingDhikr ? (
+      {isAddingNew || (editingDhikr && !isAddingCollection) ? (
         <Card className="mb-6">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-lg">{isAddingNew ? "Yeni Zikir Ekle" : "Zikir Düzenle"}</CardTitle>
@@ -406,6 +632,10 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
                     <SelectItem value="Dua">Dua</SelectItem>
                     <SelectItem value="Salavat">Salavat</SelectItem>
                     <SelectItem value="Özel">Özel</SelectItem>
+                    <SelectItem value="Ramazan">Ramazan</SelectItem>
+                    <SelectItem value="Cuma">Cuma</SelectItem>
+                    <SelectItem value="Kadir Gecesi">Kadir Gecesi</SelectItem>
+                    <SelectItem value="Namaz Sonrası">Namaz Sonrası</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -427,14 +657,227 @@ export function DhikrLibrary({ onClose, onAddDhikr }: DhikrLibraryProps) {
             </Button>
           </CardFooter>
         </Card>
+      ) : isAddingCollection || editingCollection ? (
+        <Card className="mb-6">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-lg">
+              {isAddingCollection ? "Yeni Koleksiyon Oluştur" : "Koleksiyon Düzenle"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="collectionName">Koleksiyon Adı</Label>
+                <Input
+                  id="collectionName"
+                  value={editingCollection?.name || ""}
+                  onChange={(e) => setEditingCollection((prev) => (prev ? { ...prev, name: e.target.value } : null))}
+                  placeholder="Örn: Ramazan Zikirleri"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="collectionDescription">Açıklama</Label>
+                <Textarea
+                  id="collectionDescription"
+                  value={editingCollection?.description || ""}
+                  onChange={(e) =>
+                    setEditingCollection((prev) => (prev ? { ...prev, description: e.target.value } : null))
+                  }
+                  placeholder="Koleksiyon hakkında kısa açıklama"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="collectionCategory">Kategori</Label>
+                <Select
+                  value={editingCollection?.category || "Özel"}
+                  onValueChange={(value) =>
+                    setEditingCollection((prev) => (prev ? { ...prev, category: value } : null))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kategori seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Özel">Özel</SelectItem>
+                    <SelectItem value="Ramazan">Ramazan</SelectItem>
+                    <SelectItem value="Cuma">Cuma</SelectItem>
+                    <SelectItem value="Kadir Gecesi">Kadir Gecesi</SelectItem>
+                    <SelectItem value="Namaz Sonrası">Namaz Sonrası</SelectItem>
+                    <SelectItem value="Günlük">Günlük</SelectItem>
+                    <SelectItem value="Haftalık">Haftalık</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Zikirler</Label>
+                <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
+                  <p className="text-sm text-muted-foreground mb-2">Arapça Zikirler</p>
+                  {arabicDhikrs.map((dhikr, index) => (
+                    <div key={`arabic-${index}`} className="flex items-center space-x-2 mb-2">
+                      <input
+                        type="checkbox"
+                        id={`arabic-${index}`}
+                        checked={selectedDhikrsForCollection.includes(index.toString())}
+                        onChange={() => toggleDhikrSelection(index.toString())}
+                        className="h-4 w-4"
+                      />
+                      <label htmlFor={`arabic-${index}`} className="text-sm flex-1">
+                        {dhikr.transliteration} ({dhikr.count})
+                      </label>
+                    </div>
+                  ))}
+
+                  {customDhikrs.length > 0 && (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-2 mt-4">Özel Zikirler</p>
+                      {customDhikrs.map((dhikr) => (
+                        <div key={`custom-${dhikr.id}`} className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="checkbox"
+                            id={`custom-${dhikr.id}`}
+                            checked={selectedDhikrsForCollection.includes(dhikr.id)}
+                            onChange={() => toggleDhikrSelection(dhikr.id)}
+                            className="h-4 w-4"
+                          />
+                          <label htmlFor={`custom-${dhikr.id}`} className="text-sm flex-1">
+                            {dhikr.transliteration || dhikr.name} ({dhikr.count})
+                          </label>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Seçilen zikir sayısı: {selectedDhikrsForCollection.length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="p-4 flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingCollection(null)
+                setIsAddingCollection(false)
+                setSelectedDhikrsForCollection([])
+              }}
+            >
+              İptal
+            </Button>
+            <Button
+              onClick={isAddingCollection ? addNewCollection : updateCollection}
+              disabled={!editingCollection?.name || selectedDhikrsForCollection.length === 0}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isAddingCollection ? "Oluştur" : "Güncelle"}
+            </Button>
+          </CardFooter>
+        </Card>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="collection">Koleksiyon</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="collection">Koleksiyonlar</TabsTrigger>
+            <TabsTrigger value="arabic">Arapça Zikirler</TabsTrigger>
             <TabsTrigger value="custom">Özel Zikirler</TabsTrigger>
           </TabsList>
 
           <TabsContent value="collection" className="space-y-4">
+            {filteredCollections.length > 0 ? (
+              filteredCollections.map((collection) => (
+                <Card key={collection.id} className="overflow-hidden transition-all hover:shadow-md">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{collection.name}</CardTitle>
+                        {collection.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{collection.description}</p>
+                        )}
+                        {collection.category && (
+                          <Badge variant="outline" className="mt-2">
+                            {collection.category}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => startEditingCollection(collection)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Koleksiyon Silinecek</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Bu koleksiyonu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>İptal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteCollection(collection.id)}>Sil</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">{collection.dhikrs.length} zikir</p>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => addCollectionToList(collection)}>
+                          <List className="mr-2 h-4 w-4" /> Listeye Ekle
+                        </Button>
+                        <Button variant="default" size="sm" onClick={() => addCollectionToList(collection)}>
+                          <Play className="mr-2 h-4 w-4" /> Seri Başlat
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Folder className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-1">Henüz koleksiyon oluşturulmamış</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Sık kullandığınız zikirleri koleksiyon halinde gruplayabilirsiniz.
+                </p>
+                <Button
+                  onClick={() => {
+                    setIsAddingCollection(true)
+                    setEditingCollection({
+                      id: "",
+                      name: "",
+                      description: "",
+                      dhikrs: [],
+                      type: "mixed",
+                      dateCreated: "",
+                    })
+                  }}
+                >
+                  <FolderPlus className="mr-2 h-4 w-4" /> Yeni Koleksiyon Oluştur
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="arabic" className="space-y-4">
             {filteredArabicDhikrs.length > 0 ? (
               filteredArabicDhikrs.map((dhikr, index) => (
                 <Card key={index} className="overflow-hidden transition-all hover:shadow-md">

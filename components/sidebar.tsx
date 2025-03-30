@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen } from "lucide-react"
+import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen, Database, List } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 
 interface SidebarProps {
@@ -10,9 +10,20 @@ interface SidebarProps {
   onAddDhikr: () => void
   onShare: () => void
   onDhikrLibrary: () => void
+  onDhikrSeries: () => void
+  onDataMigration: () => void
+  onArabicDhikr?: () => void
 }
 
-export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare, onDhikrLibrary }: SidebarProps) {
+export function Sidebar({
+  activeView,
+  onNavigate,
+  onAddDhikr,
+  onShare,
+  onDhikrLibrary,
+  onDhikrSeries,
+  onDataMigration,
+}: SidebarProps) {
   return (
     <div className="fixed left-0 top-0 h-full w-64 border-r bg-background p-4 flex flex-col">
       <div className="flex items-center justify-between mb-8">
@@ -48,6 +59,15 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare, onDhikrLi
           Planlama
         </Button>
 
+        <Button
+          variant={activeView === "series" ? "default" : "ghost"}
+          className="w-full justify-start"
+          onClick={() => onNavigate("series")}
+        >
+          <List className="mr-2 h-5 w-5" />
+          Zikir Serileri
+        </Button>
+
         <Button variant="ghost" className="w-full justify-start" onClick={onShare}>
           <Share2 className="mr-2 h-5 w-5" />
           Paylaş ve Aktar
@@ -56,6 +76,15 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare, onDhikrLi
         <Button variant="ghost" className="w-full justify-start" onClick={onDhikrLibrary}>
           <BookOpen className="mr-2 h-5 w-5" />
           Zikir Kütüphanesi
+        </Button>
+
+        <Button
+          variant={activeView === "data" ? "default" : "ghost"}
+          className="w-full justify-start"
+          onClick={() => onNavigate("data")}
+        >
+          <Database className="mr-2 h-5 w-5" />
+          Veri Yönetimi
         </Button>
 
         <Button
@@ -85,7 +114,7 @@ export function Sidebar({ activeView, onNavigate, onAddDhikr, onShare, onDhikrLi
       </div>
 
       <div className="mt-4 text-center">
-        <p className="text-sm text-muted-foreground">v1.0.0</p>
+        <p className="text-sm text-muted-foreground">v1.1.0</p>
         <p className="text-xs text-muted-foreground mt-1">Ömür boyu ücretsiz</p>
       </div>
     </div>

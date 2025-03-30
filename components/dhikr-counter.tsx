@@ -1,13 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, RotateCcw, Volume2, VolumeX } from "lucide-react"
+import { ArrowLeft, RotateCcw, Volume2, VolumeX, Vibrate, AlertTriangle } from "lucide-react"
 import type { Dhikr } from "@/app/page"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { formatNumber } from "@/lib/format-number"
+import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
+import { useAudioManager } from "@/components/audio-manager"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface DhikrCounterProps {
   dhikr: Dhikr
@@ -21,15 +33,61 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
   const [isVibrating, setIsVibrating] = useState(false)
   const [lastTapTime, setLastTapTime] = useState(0)
   const [doubleTapCount, setDoubleTapCount] = useState(0)
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem("dhikrSoundEnabled")
-    return saved !== null ? saved === "true" : true
+  const [vibrationEnabled, setVibrationEnabled] = useState(() => {
+    return getStorageItem("dhikrVibrationEnabled", true)
   })
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
+
+  // Ses yöneticisini kullan
+  const { soundEnabled, setSoundEnabled, playSound, audioError } = useAudioManager()
+
+  // Otomatik kaydetme işlemi
+  useEffect(() => {
+    // Her 5 saniyede bir ilerlemeyi kaydet
+    const interval = setInterval(() => {
+      if (count > 0 && count !== dhikr.currentCount) {
+        onUpdate(dhikr.id, count)
+      }
+    }, 5000)
+
+    setAutoSaveInterval(interval)
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [count, dhikr.id, dhikr.currentCount, onUpdate])
+
+  // Sayfa kapatılırken veya yenilenirken ilerleyişi kaydet
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (count > 0 && count !== dhikr.currentCount) {
+        onUpdate(dhikr.id, count)
+
+        // Kullanıcıya bir uyarı göster
+        if (count < dhikr.targetCount) {
+          e.preventDefault()
+          e.returnValue = "Zikir tamamlanmadı. Çıkmak istediğinize emin misiniz?"
+          return e.returnValue
+        }
+      }
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+
+      // Bileşen kaldırıldığında son durumu kaydet
+      if (count > 0 && count !== dhikr.currentCount) {
+        onUpdate(dhikr.id, count)
+      }
+    }
+  }, [count, dhikr.id, dhikr.currentCount, dhikr.targetCount, onUpdate])
 
   useEffect(() => {
     setProgress((count / dhikr.targetCount) * 100)
-    onUpdate(dhikr.id, count)
 
     // Show toast when reaching milestones
     if (count > 0 && count % 10 === 0) {
@@ -38,26 +96,43 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
         description: `${formatNumber(count)} zikir tamamlandı. ${formatNumber(dhikr.targetCount - count)} zikir kaldı.`,
       })
     }
-  }, [count, dhikr.id, dhikr.targetCount, onUpdate, toast])
+  }, [count, dhikr.targetCount, toast])
 
-  // Save sound preference
+  // Save vibration preference
   useEffect(() => {
-    localStorage.setItem("dhikrSoundEnabled", soundEnabled.toString())
-  }, [soundEnabled])
+    setStorageItem("dhikrVibrationEnabled", vibrationEnabled)
+  }, [vibrationEnabled])
 
-  const playSound = () => {
-    if (!soundEnabled) return
-
-    try {
-      const audio = new Audio("/click.mp3")
-      audio.volume = 0.3
-      audio.play()
-    } catch (error) {
-      console.error("Sound playback failed:", error)
+  // Ses hatası varsa uyarı göster
+  useEffect(() => {
+    if (audioError) {
+      toast({
+        title: "Ses Hatası",
+        description: audioError,
+        variant: "destructive",
+      })
     }
-  }
+  }, [audioError, toast])
 
-  const incrementCount = () => {
+  const vibrate = useCallback(
+    (pattern: number | number[]) => {
+      if (!vibrationEnabled || !("vibrate" in navigator)) return
+
+      try {
+        // Daha güçlü titreşim için değerleri artıralım
+        if (typeof pattern === "number") {
+          navigator.vibrate(pattern * 1.5)
+        } else {
+          navigator.vibrate(pattern.map((p) => p * 1.5))
+        }
+      } catch (error) {
+        console.error("Vibration failed:", error)
+      }
+    },
+    [vibrationEnabled],
+  )
+
+  const incrementCount = useCallback(() => {
     const now = Date.now()
     const isDoubleTap = now - lastTapTime < 300
 
@@ -68,47 +143,47 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
       if (doubleTapCount >= 2) {
         if (count + 5 <= dhikr.targetCount) {
           setCount((prev) => prev + 5)
-          playSound()
+          playSound(dhikr.audio)
+          vibrate([40, 30, 40, 30, 40])
           toast({
             title: "+5",
             description: "Hızlı sayım: 5 zikir eklendi",
           })
         } else {
           setCount(dhikr.targetCount)
-          playSound()
+          playSound(dhikr.audio)
+          vibrate([40, 30, 40, 30, 40])
         }
         setDoubleTapCount(0)
       } else {
         // Increment by 2 on double tap
         if (count + 2 <= dhikr.targetCount) {
           setCount((prev) => prev + 2)
-          playSound()
+          playSound(dhikr.audio)
+          vibrate([30, 20, 30])
           toast({
             title: "+2",
             description: "Çift tıklama: 2 zikir eklendi",
           })
         } else {
           setCount(dhikr.targetCount)
-          playSound()
+          playSound(dhikr.audio)
+          vibrate([30, 20, 30])
         }
       }
     } else {
       setDoubleTapCount(0)
       if (count < dhikr.targetCount) {
         setCount((prev) => prev + 1)
-        playSound()
+        playSound(dhikr.audio)
+        vibrate(30)
       }
     }
 
     setLastTapTime(now)
+  }, [count, dhikr.targetCount, dhikr.audio, doubleTapCount, lastTapTime, playSound, toast, vibrate])
 
-    // Add vibration if supported
-    if ("vibrate" in navigator) {
-      navigator.vibrate(20)
-    }
-  }
-
-  const resetCount = () => {
+  const resetCount = useCallback(() => {
     setIsVibrating(true)
     setTimeout(() => setIsVibrating(false), 500)
     setCount(0)
@@ -118,87 +193,150 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
       description: "Zikir sayacı sıfırlandı.",
     })
 
-    // Add stronger vibration for reset if supported
-    if ("vibrate" in navigator) {
-      navigator.vibrate([30, 50, 30])
-    }
-  }
+    // Add stronger vibration for reset
+    vibrate([50, 70, 50])
+  }, [toast, vibrate])
 
-  const toggleSound = () => {
-    setSoundEnabled((prev) => !prev)
+  const toggleSound = useCallback(() => {
+    setSoundEnabled(!soundEnabled)
+
     toast({
       title: soundEnabled ? "Ses kapatıldı" : "Ses açıldı",
       description: soundEnabled ? "Zikir sesleri kapatıldı." : "Zikir sesleri açıldı.",
     })
-  }
+  }, [soundEnabled, setSoundEnabled, toast])
+
+  const toggleVibration = useCallback(() => {
+    setVibrationEnabled((prev) => !prev)
+
+    // Titreşim açıldığında test titreşimi yap
+    if (!vibrationEnabled && "vibrate" in navigator) {
+      setTimeout(() => {
+        navigator.vibrate([30, 50, 30])
+      }, 300)
+    }
+
+    toast({
+      title: vibrationEnabled ? "Titreşim kapatıldı" : "Titreşim açıldı",
+      description: vibrationEnabled ? "Zikir titreşimleri kapatıldı." : "Zikir titreşimleri açıldı.",
+    })
+  }, [vibrationEnabled, toast])
+
+  const handleClose = useCallback(() => {
+    // Eğer zikir başladıysa ve tamamlanmadıysa, onay iste
+    if (count > 0 && count < dhikr.targetCount) {
+      setShowExitConfirm(true)
+    } else {
+      // Zikir tamamlandıysa veya hiç başlamadıysa, direkt kapat
+      if (autoSaveInterval) clearInterval(autoSaveInterval)
+      onUpdate(dhikr.id, count)
+      onClose()
+    }
+  }, [autoSaveInterval, count, dhikr.id, dhikr.targetCount, onClose, onUpdate])
+
+  const confirmExit = useCallback(() => {
+    if (autoSaveInterval) clearInterval(autoSaveInterval)
+    onUpdate(dhikr.id, count)
+    onClose()
+  }, [autoSaveInterval, count, dhikr.id, onClose, onUpdate])
 
   return (
-    <div className="container max-w-md mx-auto p-4 h-screen flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="text-2xl font-bold ml-2">Zikir Çek</h1>
+    <>
+      <div className="container max-w-md mx-auto p-4 h-screen flex flex-col">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={handleClose}>
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <h1 className="text-2xl font-bold ml-2">Zikir Çek</h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" onClick={toggleSound} title={soundEnabled ? "Sesi Kapat" : "Sesi Aç"}>
+              {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleVibration}
+              title={vibrationEnabled ? "Titreşimi Kapat" : "Titreşimi Aç"}
+            >
+              <Vibrate className={`h-5 w-5 ${vibrationEnabled ? "" : "opacity-50"}`} />
+            </Button>
+          </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={toggleSound}>
-          {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-        </Button>
+
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <motion.div
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
+            {dhikr.arabicText && <p className="font-arabic text-2xl mb-2 leading-relaxed">{dhikr.arabicText}</p>}
+            {dhikr.transliteration && dhikr.transliteration !== dhikr.name && (
+              <p className="text-sm text-muted-foreground mb-1">{dhikr.transliteration}</p>
+            )}
+            {dhikr.translation && <p className="text-xs text-muted-foreground mb-2">{dhikr.translation}</p>}
+            <p className="text-muted-foreground">Hedef: {formatNumber(dhikr.targetCount)}</p>
+            {dhikr.category && (
+              <div className="mt-2">
+                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
+                  {dhikr.category}
+                </span>
+              </div>
+            )}
+          </motion.div>
+
+          <motion.div
+            className="w-full mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <Progress value={progress} className="h-3" />
+          </motion.div>
+
+          <motion.div
+            className={`text-center mb-12 ${isVibrating ? "animate-shake" : ""}`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <div className="text-7xl font-bold mb-2">{formatNumber(count)}</div>
+            <p className="text-muted-foreground">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
+            <p className="text-xs text-muted-foreground mt-2">Çift tıklama: +2 • Üçlü tıklama: +5</p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 gap-4 w-full">
+            <Button variant="outline" size="lg" className="h-16 text-lg" onClick={resetCount}>
+              <RotateCcw className="mr-2 h-5 w-5" /> Sıfırla
+            </Button>
+            <Button variant="default" size="lg" className="h-16 text-lg" onClick={incrementCount}>
+              {count < dhikr.targetCount ? "Zikret" : "Tamamla"}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
-          {dhikr.arabicText && <p className="font-arabic text-2xl mb-2 leading-relaxed">{dhikr.arabicText}</p>}
-          {dhikr.transliteration && dhikr.transliteration !== dhikr.name && (
-            <p className="text-sm text-muted-foreground mb-1">{dhikr.transliteration}</p>
-          )}
-          {dhikr.translation && <p className="text-xs text-muted-foreground mb-2">{dhikr.translation}</p>}
-          <p className="text-muted-foreground">Hedef: {formatNumber(dhikr.targetCount)}</p>
-          {dhikr.category && (
-            <div className="mt-2">
-              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
-                {dhikr.category}
-              </span>
-            </div>
-          )}
-        </motion.div>
-
-        <motion.div
-          className="w-full mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <Progress value={progress} className="h-3" />
-        </motion.div>
-
-        <motion.div
-          className={`text-center mb-12 ${isVibrating ? "animate-shake" : ""}`}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <div className="text-7xl font-bold mb-2">{formatNumber(count)}</div>
-          <p className="text-muted-foreground">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
-          <p className="text-xs text-muted-foreground mt-2">Çift tıklama: +2 • Üçlü tıklama: +5</p>
-        </motion.div>
-
-        <div className="grid grid-cols-2 gap-4 w-full">
-          <Button variant="outline" size="lg" className="h-16 text-lg" onClick={resetCount}>
-            <RotateCcw className="mr-2 h-5 w-5" /> Sıfırla
-          </Button>
-          <Button variant="default" size="lg" className="h-16 text-lg" onClick={incrementCount}>
-            Sayaç {count < dhikr.targetCount ? "+1" : "✓"}
-          </Button>
-        </div>
-      </div>
-    </div>
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" /> Zikir Tamamlanmadı
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Zikir henüz tamamlanmadı. Çıkmak istediğinize emin misiniz? İlerlemeniz kaydedilecek ve daha sonra devam
+              edebilirsiniz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Devam Et</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmExit}>Çık ve Kaydet</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 

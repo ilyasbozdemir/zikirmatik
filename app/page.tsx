@@ -6,7 +6,21 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Plus, Play, Trash2, RotateCcw, Calendar, X, BarChart3, Info, Clock, BookOpen } from "lucide-react"
+import {
+  Plus,
+  Play,
+  Trash2,
+  RotateCcw,
+  Calendar,
+  X,
+  BarChart3,
+  Info,
+  Clock,
+  BookOpen,
+  List,
+  Folder,
+  Loader2,
+} from "lucide-react"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { tr } from "date-fns/locale"
 import { DhikrCounter } from "@/components/dhikr-counter"
@@ -40,6 +54,12 @@ import { ShareView } from "@/components/share-view"
 import { ArabicDhikrView } from "@/components/arabic-dhikr-view"
 import { AdvancedScheduleView } from "@/components/advanced-schedule-view"
 import { DhikrLibrary } from "@/components/dhikr-library"
+import { arabicDhikrs } from "@/lib/arabic-dhikrs"
+import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
+import { InstallPWAButton, UpdatePWAButton, usePWA } from "@/components/pwa-manager"
+import { RepeatDhikrModal } from "@/components/repeat-dhikr-modal"
+import { DhikrSeriesManager } from "@/components/dhikr-series-manager"
+import { DataMigrationManager } from "@/components/data-migration-manager"
 
 // Define the Dhikr type
 export type Dhikr = {
@@ -64,6 +84,10 @@ export type Dhikr = {
   arabicText?: string
   transliteration?: string
   translation?: string
+  isPartOfSeries?: boolean
+  seriesIndex?: number
+  seriesId?: string
+  audio?: string
 }
 
 // Common Islamic dhikrs in Turkish
@@ -94,89 +118,136 @@ export default function Home() {
   const [streak, setStreak] = useState(0)
   const [activeView, setActiveView] = useState("home")
   const { toast } = useToast()
-  const { theme, setTheme } = useTheme()
+  const { setTheme } = useTheme()
   const isMobile = useMobile()
   const [showShare, setShowShare] = useState(false)
   const [showArabicDhikr, setShowArabicDhikr] = useState(false)
   const [showAdvancedSchedule, setShowAdvancedSchedule] = useState(false)
   const [showDhikrLibrary, setShowDhikrLibrary] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [repeatDhikrModalOpen, setRepeatDhikrModalOpen] = useState(false)
+  const [dhikrToRepeat, setDhikrToRepeat] = useState<Dhikr | null>(null)
+  const [showDhikrSeries, setShowDhikrSeries] = useState(false)
+  const [showDataMigration, setShowDataMigration] = useState(false)
+  const { updateAvailable } = usePWA()
+
+  // URL parametrelerini kontrol et
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+
+      // Görünüm parametresi
+      const viewParam = params.get("view")
+      if (viewParam) {
+        switch (viewParam) {
+          case "stats":
+            setShowStats(true)
+            break
+          case "help":
+            setShowHelp(true)
+            break
+          case "settings":
+            setShowSettings(true)
+            break
+          case "schedule":
+            setShowSchedule(true)
+            break
+        }
+      }
+
+      // Eylem parametresi
+      const actionParam = params.get("action")
+      if (actionParam) {
+        switch (actionParam) {
+          case "add":
+            setShowAddForm(true)
+            break
+        }
+      }
+
+      // Paylaşım parametresi
+      if (params.has("share")) {
+        setShowShare(true)
+      }
+
+      // URL'yi temizle
+      if (viewParam || actionParam || params.has("share")) {
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    }
+  }, [])
 
   // Load dhikrs from localStorage on component mount
   useEffect(() => {
-    const savedDhikrs = localStorage.getItem("dhikrs")
-    if (savedDhikrs) {
-      try {
-        // Parse saved dhikrs
-        const parsedDhikrs = JSON.parse(savedDhikrs)
+    try {
+      const savedDhikrs = getStorageItem("dhikrs", [])
 
-        // Migrate old format to new format if needed
-        const migratedDhikrs = parsedDhikrs.map((dhikr: any) => {
-          // Ensure scheduledDays is an array of strings
-          if (dhikr.scheduledDays) {
-            // Handle case where scheduledDays might be in old format
-            if (typeof dhikr.scheduledDays === "string") {
-              try {
-                dhikr.scheduledDays = JSON.parse(dhikr.scheduledDays)
-              } catch (e) {
-                // If parsing fails, convert to array with the string
-                dhikr.scheduledDays = [dhikr.scheduledDays]
-              }
+      // Migrate old format to new format if needed
+      const migratedDhikrs = savedDhikrs.map((dhikr: any) => {
+        // Ensure scheduledDays is an array of strings
+        if (dhikr.scheduledDays) {
+          // Handle case where scheduledDays might be in old format
+          if (typeof dhikr.scheduledDays === "string") {
+            try {
+              dhikr.scheduledDays = JSON.parse(dhikr.scheduledDays)
+            } catch (e) {
+              // If parsing fails, convert to array with the string
+              dhikr.scheduledDays = [dhikr.scheduledDays]
             }
-
-            // Ensure all days are in lowercase format
-            dhikr.scheduledDays = dhikr.scheduledDays.map((day: string) => day.toLowerCase())
           }
 
-          return dhikr
-        })
+          // Ensure all days are in lowercase format
+          dhikr.scheduledDays = dhikr.scheduledDays.map((day: string) => day.toLowerCase())
+        }
 
-        setDhikrs(migratedDhikrs)
-      } catch (error) {
-        console.error("Error parsing saved dhikrs:", error)
-        setDhikrs([])
-        localStorage.setItem("dhikrs", JSON.stringify([]))
+        return dhikr
+      })
+
+      setDhikrs(migratedDhikrs)
+
+      // Check if it's the first time opening the app
+      const hasSeenIntro = getStorageItem("hasSeenIntro", false)
+      if (!hasSeenIntro) {
+        setShowHelp(true)
+        setStorageItem("hasSeenIntro", true)
       }
-    } else {
-      // Empty initial state
+
+      // Check for scheduled dhikrs
+      checkScheduledDhikrs(migratedDhikrs)
+    } catch (error) {
+      console.error("Error loading dhikrs:", error)
       setDhikrs([])
-      localStorage.setItem("dhikrs", JSON.stringify([]))
+      setStorageItem("dhikrs", [])
+    } finally {
+      setIsLoading(false)
     }
-
-    // Check if it's the first time opening the app
-    const hasSeenIntro = localStorage.getItem("hasSeenIntro")
-    if (!hasSeenIntro) {
-      setShowHelp(true)
-      localStorage.setItem("hasSeenIntro", "true")
-    }
-
-    // Check for scheduled dhikrs
-    checkScheduledDhikrs()
   }, [])
 
   // Save dhikrs to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("dhikrs", JSON.stringify(dhikrs))
-
-    // Calculate streak
-    calculateStreak()
-  }, [dhikrs])
+    if (!isLoading) {
+      setStorageItem("dhikrs", dhikrs)
+      // Calculate streak
+      calculateStreak()
+    }
+  }, [dhikrs, isLoading])
 
   // Check for scheduled dhikrs every minute
   useEffect(() => {
     const interval = setInterval(() => {
-      checkScheduledDhikrs()
+      checkScheduledDhikrs(dhikrs)
     }, 60000) // Check every minute
 
     return () => clearInterval(interval)
   }, [dhikrs])
 
-  const checkScheduledDhikrs = () => {
+  const checkScheduledDhikrs = (dhikrsToCheck: Dhikr[]) => {
     const now = new Date()
     // 'long' kullanıp sonra küçük harfe çevirelim
     const currentDay = now.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()
     const currentTime = format(now, "HH:mm")
 
-    dhikrs.forEach((dhikr) => {
+    dhikrsToCheck.forEach((dhikr) => {
       if (
         dhikr.status === "planned" &&
         dhikr.scheduledDays &&
@@ -248,8 +319,8 @@ export default function Home() {
   }
 
   const updateDhikrCount = (id: string, count: number) => {
-    setDhikrs((prev) =>
-      prev.map((dhikr) => {
+    setDhikrs((prev) => {
+      const updatedDhikrs = prev.map((dhikr) => {
         if (dhikr.id === id) {
           const isCompleted = count >= dhikr.targetCount
           return {
@@ -260,13 +331,57 @@ export default function Home() {
           }
         }
         return dhikr
-      }),
-    )
+      })
+
+      // Eğer tamamlanan zikir bir serinin parçasıysa, bir sonraki zikiri başlatalım
+      const completedDhikr = updatedDhikrs.find((d) => d.id === id)
+      if (completedDhikr && completedDhikr.isPartOfSeries && count >= completedDhikr.targetCount) {
+        // Aynı serideki bir sonraki zikiri bulalım
+        const nextInSeries = updatedDhikrs.find(
+          (d) =>
+            d.seriesId === completedDhikr.seriesId &&
+            d.seriesIndex === completedDhikr.seriesIndex + 1 &&
+            d.status === "planned",
+        )
+
+        if (nextInSeries) {
+          // Kullanıcıya bildirim gösterelim
+          setTimeout(() => {
+            toast({
+              title: "Seri Devam Ediyor",
+              description: `"${nextInSeries.name}" zikrine geçiliyor...`,
+            })
+
+            // Kısa bir gecikme sonrası bir sonraki zikiri başlatalım
+            setTimeout(() => {
+              setActiveDhikr({
+                ...nextInSeries,
+                status: "in-progress" as const,
+              })
+            }, 1500)
+          }, 1000)
+        } else {
+          // Seri tamamlandı
+          toast({
+            title: "Zikir Serisi Tamamlandı",
+            description: "Tüm seri başarıyla tamamlandı.",
+          })
+        }
+      }
+
+      return updatedDhikrs
+    })
 
     if (activeDhikr && activeDhikr.id === id) {
       if (count >= activeDhikr.targetCount) {
-        setShowSuccess(true)
-        setActiveDhikr(null)
+        // Eğer zikir bir serinin parçası değilse normal başarı ekranını göster
+        if (!activeDhikr.isPartOfSeries) {
+          setShowSuccess(true)
+          setActiveDhikr(null)
+        } else {
+          // Seri devam ediyorsa başarı ekranını gösterme, sadece aktif zikiri temizle
+          setActiveDhikr(null)
+        }
       } else {
         setActiveDhikr((prev) => (prev ? { ...prev, currentCount: count } : null))
       }
@@ -291,6 +406,43 @@ export default function Home() {
     })
   }
 
+  // addDhikrSeries fonksiyonunu güncelleyelim
+  const addDhikrSeries = (dhikrs: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[]) => {
+    if (dhikrs.length === 0) return
+
+    const seriesId = Date.now().toString()
+    const newDhikrs = dhikrs.map((dhikr, index) => ({
+      id: seriesId + index,
+      dateCreated: new Date().toISOString(),
+      status: "planned" as const,
+      currentCount: 0,
+      ...dhikr,
+      // Seri olarak çekilecek zikirleri işaretleyelim
+      isPartOfSeries: true,
+      seriesIndex: index,
+      seriesId: seriesId, // Aynı seriye ait zikirleri gruplamak için
+    }))
+
+    setDhikrs((prev) => [...prev, ...newDhikrs])
+
+    toast({
+      title: "Zikir serisi eklendi",
+      description: `${dhikrs.length} zikir başarıyla çekilecekler listesine eklendi.`,
+    })
+  }
+
+  // handleAddDhikrSeriesFromCollection fonksiyonunu ekleyelim
+  const handleAddDhikrSeriesFromCollection = (
+    dhikrs: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[],
+  ) => {
+    addDhikrSeries(dhikrs)
+
+    toast({
+      title: "Koleksiyon Eklendi",
+      description: `${dhikrs.length} zikir çekilecekler listesine eklendi.`,
+    })
+  }
+
   const deleteDhikr = (id: string) => {
     const dhikrToDelete = dhikrs.find((d) => d.id === id)
     setDhikrs((prev) => prev.filter((dhikr) => dhikr.id !== id))
@@ -303,12 +455,12 @@ export default function Home() {
     }
   }
 
-  const repeatDhikr = (dhikr: Dhikr) => {
+  const handleRepeatDhikr = (dhikr: Dhikr, count: number, addToSeries: boolean, scheduleNow: boolean) => {
     // Son 5 saniye içinde aynı zikir için tekrar butonuna basılıp basılmadığını kontrol et
-    const lastRepeatTime = localStorage.getItem(`lastRepeat_${dhikr.id}`)
+    const lastRepeatTime = getStorageItem(`lastRepeat_${dhikr.id}`, 0)
     const now = Date.now()
 
-    if (lastRepeatTime && now - Number.parseInt(lastRepeatTime) < 5000) {
+    if (lastRepeatTime && now - lastRepeatTime < 5000) {
       toast({
         title: "Yavaş ol!",
         description: "Bu zikir zaten çekilecekler listesine eklendi.",
@@ -320,24 +472,46 @@ export default function Home() {
     const newDhikr: Dhikr = {
       id: Date.now().toString(),
       name: dhikr.name,
-      targetCount: dhikr.targetCount,
+      targetCount: count,
       currentCount: 0,
       dateCreated: new Date().toISOString(),
       status: "planned",
       category: dhikr.category,
       scheduledDays: dhikr.scheduledDays,
       scheduledTime: dhikr.scheduledTime,
+      arabicText: dhikr.arabicText,
+      transliteration: dhikr.transliteration,
+      translation: dhikr.translation,
+      audio: dhikr.audio,
     }
 
-    setDhikrs((prev) => [...prev, newDhikr])
+    if (scheduleNow) {
+      setDhikrs((prev) => [...prev, newDhikr])
+    }
 
     // Son tekrar zamanını kaydet
-    localStorage.setItem(`lastRepeat_${dhikr.id}`, now.toString())
+    setStorageItem(`lastRepeat_${dhikr.id}`, now)
 
     toast({
       title: "Zikir tekrarlanıyor",
-      description: `"${dhikr.name}" zikri "Çekilecekler" listesine eklendi.`,
+      description: `"${dhikr.name}" zikri ${scheduleNow ? '"Çekilecekler" listesine eklendi.' : "tekrarlanıyor."}`,
     })
+
+    // Eğer scheduleNow false ise ve addToSeries true ise, seri oluştur
+    if (!scheduleNow && addToSeries) {
+      // Seri oluşturma işlemleri
+      // ...
+    }
+
+    // Eğer scheduleNow false ise, hemen başlat
+    if (!scheduleNow) {
+      startDhikr(newDhikr)
+    }
+  }
+
+  const repeatDhikr = (dhikr: Dhikr) => {
+    setDhikrToRepeat(dhikr)
+    setRepeatDhikrModalOpen(true)
   }
 
   const groupDhikrsByDate = (dhikrs: Dhikr[]) => {
@@ -440,30 +614,56 @@ export default function Home() {
         setShowHelp(false)
         setShowSettings(false)
         setShowSchedule(false)
+        setShowDhikrSeries(false)
+        setShowDataMigration(false)
         break
       case "stats":
         setShowStats(true)
         setShowHelp(false)
         setShowSettings(false)
         setShowSchedule(false)
+        setShowDhikrSeries(false)
+        setShowDataMigration(false)
         break
       case "schedule":
         setShowStats(false)
         setShowHelp(false)
         setShowSettings(false)
         setShowSchedule(true)
+        setShowDhikrSeries(false)
+        setShowDataMigration(false)
         break
       case "help":
         setShowStats(false)
         setShowHelp(true)
         setShowSettings(false)
         setShowSchedule(false)
+        setShowDhikrSeries(false)
+        setShowDataMigration(false)
         break
       case "settings":
         setShowStats(false)
         setShowHelp(false)
         setShowSettings(true)
         setShowSchedule(false)
+        setShowDhikrSeries(false)
+        setShowDataMigration(false)
+        break
+      case "series":
+        setShowStats(false)
+        setShowHelp(false)
+        setShowSettings(false)
+        setShowSchedule(false)
+        setShowDhikrSeries(true)
+        setShowDataMigration(false)
+        break
+      case "data":
+        setShowStats(false)
+        setShowHelp(false)
+        setShowSettings(false)
+        setShowSchedule(false)
+        setShowDhikrSeries(false)
+        setShowDataMigration(true)
         break
     }
   }
@@ -490,6 +690,173 @@ export default function Home() {
     window.location.reload()
   }
 
+  const handleAddDhikrSeries = (sharedDhikrs: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[]) => {
+    const newDhikrs = sharedDhikrs.map((dhikr) => ({
+      ...dhikr,
+      id: Date.now() + Math.random().toString(36).substring(2, 9), // Yeni ID oluştur
+      dateCreated: new Date().toISOString(),
+      status: "planned" as const,
+      currentCount: 0,
+    }))
+
+    setDhikrs((prev) => [...prev, ...newDhikrs])
+
+    toast({
+      title: "Zikirler Eklendi",
+      description: `${newDhikrs.length} zikir başarıyla çekilecekler listesine eklendi.`,
+    })
+  }
+
+  // handleStartSeries fonksiyonunda hala bir sorun var. Fonksiyonu tamamen değiştiriyorum:
+
+  const handleStartSeries = (seriesId: string) => {
+    // Seriyi localStorage'dan al
+    const savedSeries = getStorageItem("dhikrSeries", []) as any[]
+    const series = savedSeries.find((s) => s.id === seriesId)
+
+    if (!series || series.dhikrs.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Seri bulunamadı veya boş.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Serideki zikirleri al
+    const seriesDhikrs: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[] = []
+
+    series.dhikrs.forEach((dhikrId: string) => {
+      // Önce mevcut zikirlerden bul
+      const existingDhikr = dhikrs.find((d) => d.id === dhikrId)
+      if (existingDhikr) {
+        seriesDhikrs.push({
+          name: existingDhikr.name,
+          targetCount: existingDhikr.targetCount,
+          category: existingDhikr.category,
+          arabicText: existingDhikr.arabicText,
+          transliteration: existingDhikr.transliteration,
+          translation: existingDhikr.translation,
+          audio: existingDhikr.audio,
+        })
+      }
+    })
+
+    if (seriesDhikrs.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Seride geçerli zikir bulunamadı.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Seriyi başlat
+    addDhikrSeries(seriesDhikrs)
+
+    // İlk zikiri hemen başlat
+    setTimeout(() => {
+      const newSeriesId = Date.now().toString()
+      const firstDhikr: Dhikr = {
+        id: newSeriesId + "0",
+        name: seriesDhikrs[0].name,
+        targetCount: seriesDhikrs[0].targetCount,
+        currentCount: 0,
+        dateCreated: new Date().toISOString(),
+        status: "in-progress",
+        category: seriesDhikrs[0].category,
+        arabicText: seriesDhikrs[0].arabicText,
+        transliteration: seriesDhikrs[0].transliteration,
+        translation: seriesDhikrs[0].translation,
+        isPartOfSeries: true,
+        seriesIndex: 0,
+        seriesId: newSeriesId,
+        audio: seriesDhikrs[0].audio,
+      }
+
+      setActiveDhikr(firstDhikr)
+      setShowDhikrSeries(false)
+
+      // Son kullanım zamanını güncelle
+      const updatedSeries = savedSeries.map((s) =>
+        s.id === seriesId ? { ...s, lastUsed: new Date().toISOString() } : s,
+      )
+      setStorageItem("dhikrSeries", updatedSeries)
+    }, 500)
+  }
+
+  const handleAddSeriesList = (seriesId: string) => {
+    // Seriyi localStorage'dan al\
+    const savedSeries = getStorageItem("dhikrSeries", []) as any[]
+    const series = savedSeries.find((s) => s.id === seriesId)
+
+    if (!series || series.dhikrs.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Seri bulunamadı veya boş.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Serideki zikirleri al
+    const seriesDhikrs: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">[] = []
+
+    series.dhikrs.forEach((dhikrId: string) => {
+      // Önce mevcut zikirlerden bul
+      const existingDhikr = dhikrs.find((d) => d.id === dhikrId)
+      if (existingDhikr) {
+        seriesDhikrs.push({
+          name: existingDhikr.name,
+          targetCount: existingDhikr.targetCount,
+          category: existingDhikr.category,
+          arabicText: existingDhikr.arabicText,
+          transliteration: existingDhikr.transliteration,
+          translation: existingDhikr.translation,
+          audio: existingDhikr.audio,
+        })
+      }
+    })
+
+    if (seriesDhikrs.length === 0) {
+      toast({
+        title: "Hata",
+        description: "Seride geçerli zikir bulunamadı.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Seriyi listeye ekle
+    addDhikrSeries(seriesDhikrs)
+
+    // Son kullanım zamanını güncelle
+    const updatedSeries = savedSeries.map((s) => (s.id === seriesId ? { ...s, lastUsed: new Date().toISOString() } : s))
+    setStorageItem("dhikrSeries", updatedSeries)
+
+    toast({
+      title: "Seri Eklendi",
+      description: `"${series.name}" serisi çekilecekler listesine eklendi.`,
+    })
+
+    setShowDhikrSeries(false)
+  }
+
+  // Yükleme durumunda gösterilecek bileşen
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="animate-pulse mb-4">
+          <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Zikirmatik</h1>
+        <p className="text-muted-foreground text-center">Zikirleriniz yükleniyor...</p>
+      </div>
+    )
+  }
+
   if (showSuccess) {
     return <SuccessScreen onClose={() => setShowSuccess(false)} />
   }
@@ -511,7 +878,7 @@ export default function Home() {
   }
 
   if (showSettings) {
-    return <SettingsView onClose={() => handleNavigation("home")} />
+    return <SettingsView onClose={() => handleNavigation("home")} onShare={() => setShowShare(true)} />
   }
 
   if (showSchedule) {
@@ -545,7 +912,28 @@ export default function Home() {
   }
 
   if (showDhikrLibrary) {
-    return <DhikrLibrary onClose={() => setShowDhikrLibrary(false)} onAddDhikr={addNewDhikr} />
+    return (
+      <DhikrLibrary
+        onClose={() => setShowDhikrLibrary(false)}
+        onAddDhikr={addNewDhikr}
+        onAddDhikrSeries={addDhikrSeries}
+      />
+    )
+  }
+
+  if (showDhikrSeries) {
+    return (
+      <DhikrSeriesManager
+        dhikrs={dhikrs}
+        onClose={() => setShowDhikrSeries(false)}
+        onStartSeries={handleStartSeries}
+        onAddToList={handleAddSeriesList}
+      />
+    )
+  }
+
+  if (showDataMigration) {
+    return <DataMigrationManager onClose={() => setShowDataMigration(false)} onReload={reloadApp} />
   }
 
   return (
@@ -555,9 +943,11 @@ export default function Home() {
           activeView={activeView}
           onNavigate={handleNavigation}
           onAddDhikr={() => setShowAddForm(true)}
-          onShare={() => setShowShare(true)} // Yeni prop
+          onShare={() => setShowShare(true)}
           onArabicDhikr={() => setShowArabicDhikr(true)}
           onDhikrLibrary={() => setShowDhikrLibrary(true)}
+          onDhikrSeries={() => setShowDhikrSeries(true)}
+          onDataMigration={() => setShowDataMigration(true)}
         />
       )}
 
@@ -624,6 +1014,20 @@ export default function Home() {
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* PWA Kurulum Butonu - Mobil cihazlarda göster */}
+          {isMobile && (
+            <div className="mb-4">
+              <InstallPWAButton />
+            </div>
+          )}
+
+          {/* Güncelleme Butonu */}
+          {updateAvailable && (
+            <div className="mb-4">
+              <UpdatePWAButton />
             </div>
           )}
 
@@ -719,29 +1123,216 @@ export default function Home() {
                 <Plus className="mr-2 h-4 w-4" /> Hızlı Zikir Ekle
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[50vh]">
+            <SheetContent side="bottom" className="h-[60vh]">
               <SheetHeader className="mb-4">
                 <SheetTitle>Hızlı Zikir Ekle</SheetTitle>
-                <SheetDescription>Sık kullanılan zikirlerden birini seçin veya özel zikir ekleyin</SheetDescription>
+                <SheetDescription>
+                  Sık kullanılan zikirlerden birini seçin veya koleksiyonlardan ekleyin
+                </SheetDescription>
               </SheetHeader>
-              <div className="grid grid-cols-1 gap-2">
-                {commonDhikrs.map((dhikr) => (
-                  <Button
-                    key={dhikr.name}
-                    variant="outline"
-                    onClick={() => {
-                      quickAddDhikr(dhikr)
-                    }}
-                    className="justify-between"
-                  >
-                    <span>{dhikr.name}</span>
-                    <Badge variant="secondary">{dhikr.count}</Badge>
-                  </Button>
-                ))}
-                <Button onClick={() => setShowAddForm(true)} className="mt-2">
-                  <Plus className="mr-2 h-4 w-4" /> Özel Zikir Ekle
-                </Button>
-              </div>
+
+              <Tabs defaultValue="quick">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="quick">Hızlı Zikirler</TabsTrigger>
+                  <TabsTrigger value="collections">Koleksiyonlar</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="quick">
+                  <div className="grid grid-cols-1 gap-2">
+                    {commonDhikrs.map((dhikr) => (
+                      <Button
+                        key={dhikr.name}
+                        variant="outline"
+                        onClick={() => {
+                          quickAddDhikr(dhikr)
+                        }}
+                        className="justify-between"
+                      >
+                        <span>{dhikr.name}</span>
+                        <Badge variant="secondary">{dhikr.count}</Badge>
+                      </Button>
+                    ))}
+                    <Button onClick={() => setShowAddForm(true)} className="mt-2">
+                      <Plus className="mr-2 h-4 w-4" /> Özel Zikir Ekle
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="collections">
+                  {(() => {
+                    // localStorage'dan koleksiyonları al
+                    const savedCollections = getStorageItem("dhikrCollections", [])
+
+                    if (savedCollections.length === 0) {
+                      return (
+                        <div className="text-center py-6">
+                          <Folder className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-medium mb-1">Henüz koleksiyon oluşturulmamış</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Zikir kütüphanesinden koleksiyon oluşturabilirsiniz.
+                          </p>
+                          <Button onClick={() => setShowDhikrLibrary(true)}>
+                            <BookOpen className="mr-2 h-4 w-4" /> Zikir Kütüphanesine Git
+                          </Button>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div className="grid grid-cols-1 gap-2">
+                        {savedCollections.map((collection) => (
+                          <Card key={collection.id} className="overflow-hidden">
+                            <CardHeader className="p-3 pb-1">
+                              <CardTitle className="text-base">{collection.name}</CardTitle>
+                              {collection.category && (
+                                <Badge variant="outline" className="mt-1 w-fit">
+                                  {collection.category}
+                                </Badge>
+                              )}
+                            </CardHeader>
+                            <CardContent className="p-3 pt-0">
+                              <p className="text-xs text-muted-foreground">{collection.dhikrs.length} zikir</p>
+                              <div className="flex justify-between mt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Koleksiyondaki zikirleri çekilecekler listesine ekle
+                                    const customDhikrs = getStorageItem("customDhikrs", [])
+                                    const arabicDhikrsFromLib = arabicDhikrs
+
+                                    const dhikrsToAdd = collection.dhikrs
+                                      .map((id) => {
+                                        // Özel zikirlerden ara
+                                        const customDhikr = customDhikrs.find((d) => d.id === id)
+                                        if (customDhikr) {
+                                          return {
+                                            name: customDhikr.transliteration || customDhikr.name,
+                                            targetCount: customDhikr.count,
+                                            category: customDhikr.category,
+                                            arabicText: customDhikr.arabicText,
+                                            transliteration: customDhikr.transliteration,
+                                            translation: customDhikr.translation,
+                                            audio: customDhikr.audio,
+                                          }
+                                        }
+
+                                        // Arapça zikirlerden ara
+                                        const arabicIndex = Number.parseInt(id)
+                                        if (
+                                          !isNaN(arabicIndex) &&
+                                          arabicIndex >= 0 &&
+                                          arabicIndex < arabicDhikrsFromLib.length
+                                        ) {
+                                          const arabicDhikr = arabicDhikrsFromLib[arabicIndex]
+                                          return {
+                                            name: arabicDhikr.transliteration,
+                                            targetCount: arabicDhikr.count,
+                                            category: arabicDhikr.category,
+                                            arabicText: arabicDhikr.name,
+                                            transliteration: arabicDhikr.transliteration,
+                                            translation: arabicDhikr.translation,
+                                            audio: arabicDhikr.audio,
+                                          }
+                                        }
+
+                                        return null
+                                      })
+                                      .filter(Boolean)
+
+                                    if (dhikrsToAdd.length > 0) {
+                                      handleAddDhikrSeriesFromCollection(dhikrsToAdd)
+                                    }
+                                  }}
+                                >
+                                  <List className="mr-2 h-4 w-4" /> Listeye Ekle
+                                </Button>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Koleksiyondaki zikirleri seri olarak başlat
+                                    const customDhikrs = getStorageItem("customDhikrs", [])
+                                    const arabicDhikrsFromLib = arabicDhikrs
+
+                                    const dhikrsToAdd = collection.dhikrs
+                                      .map((id) => {
+                                        // Özel zikirlerden ara
+                                        const customDhikr = customDhikrs.find((d) => d.id === id)
+                                        if (customDhikr) {
+                                          return {
+                                            name: customDhikr.transliteration || customDhikr.name,
+                                            targetCount: customDhikr.count,
+                                            category: customDhikr.category,
+                                            arabicText: customDhikr.arabicText,
+                                            transliteration: customDhikr.transliteration,
+                                            translation: customDhikr.translation,
+                                            audio: customDhikr.audio,
+                                          }
+                                        }
+
+                                        // Arapça zikirlerden ara
+                                        const arabicIndex = Number.parseInt(id)
+                                        if (
+                                          !isNaN(arabicIndex) &&
+                                          arabicIndex >= 0 &&
+                                          arabicIndex < arabicDhikrsFromLib.length
+                                        ) {
+                                          const arabicDhikr = arabicDhikrsFromLib[arabicIndex]
+                                          return {
+                                            name: arabicDhikr.transliteration,
+                                            targetCount: arabicDhikr.count,
+                                            category: arabicDhikr.category,
+                                            arabicText: arabicDhikr.name,
+                                            transliteration: arabicDhikr.transliteration,
+                                            translation: arabicDhikr.translation,
+                                            audio: arabicDhikr.audio,
+                                          }
+                                        }
+
+                                        return null
+                                      })
+                                      .filter(Boolean)
+
+                                    if (dhikrsToAdd.length > 0) {
+                                      addDhikrSeries(dhikrsToAdd)
+
+                                      // İlk zikiri hemen başlat
+                                      setTimeout(() => {
+                                        const seriesId = Date.now().toString()
+                                        const firstDhikr = {
+                                          id: seriesId + "0",
+                                          name: dhikrsToAdd[0].name,
+                                          targetCount: dhikrsToAdd[0].targetCount,
+                                          currentCount: 0,
+                                          dateCreated: new Date().toISOString(),
+                                          status: "in-progress" as const,
+                                          category: dhikrsToAdd[0].category,
+                                          arabicText: dhikrsToAdd[0].arabicText,
+                                          transliteration: dhikrsToAdd[0].transliteration,
+                                          translation: dhikrsToAdd[0].translation,
+                                          isPartOfSeries: true,
+                                          seriesIndex: 0,
+                                          seriesId: seriesId,
+                                          audio: dhikrsToAdd[0].audio,
+                                        }
+
+                                        setActiveDhikr(firstDhikr)
+                                      }, 500)
+                                    }
+                                  }}
+                                >
+                                  <Play className="mr-2 h-4 w-4" /> Seri Başlat
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </TabsContent>
+              </Tabs>
             </SheetContent>
           </Sheet>
 
@@ -948,6 +1539,7 @@ export default function Home() {
               onShare={() => setShowShare(true)}
               onArabicDhikr={() => setShowArabicDhikr(true)}
               onDhikrLibrary={() => setShowDhikrLibrary(true)}
+              onDhikrSeries={() => setShowDhikrSeries(true)}
             />
           )}
 
@@ -961,6 +1553,16 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Tekrarla Modal */}
+      {dhikrToRepeat && (
+        <RepeatDhikrModal
+          dhikr={dhikrToRepeat}
+          open={repeatDhikrModalOpen}
+          onOpenChange={setRepeatDhikrModalOpen}
+          onRepeat={handleRepeatDhikr}
+        />
+      )}
     </div>
   )
 }

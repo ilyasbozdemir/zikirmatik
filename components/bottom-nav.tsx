@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, Settings, Plus, HelpCircle, Share2, BookOpen } from "lucide-react"
+import { Home, Settings, Plus, HelpCircle, BookOpen, List } from "lucide-react"
 
 interface BottomNavProps {
   activeView: string
@@ -9,9 +9,18 @@ interface BottomNavProps {
   onAddDhikr: () => void
   onShare: () => void
   onDhikrLibrary: () => void
+  onDhikrSeries: () => void
+  onArabicDhikr?: () => void
 }
 
-export function BottomNav({ activeView, onNavigate, onAddDhikr, onShare, onDhikrLibrary }: BottomNavProps) {
+export function BottomNav({
+  activeView,
+  onNavigate,
+  onAddDhikr,
+  onShare,
+  onDhikrLibrary,
+  onDhikrSeries,
+}: BottomNavProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around px-2 z-10">
       <Button
@@ -31,8 +40,13 @@ export function BottomNav({ activeView, onNavigate, onAddDhikr, onShare, onDhikr
         <Plus className="h-6 w-6" />
       </Button>
 
-      <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={onShare}>
-        <Share2 className="h-5 w-5" />
+      <Button
+        variant="ghost"
+        size="icon"
+        className={activeView === "series" ? "text-primary" : "text-muted-foreground"}
+        onClick={onDhikrSeries}
+      >
+        <List className="h-5 w-5" />
       </Button>
 
       <Button
