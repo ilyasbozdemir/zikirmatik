@@ -1,0 +1,32 @@
+project_id = "zikirmatik-app"
+
+[api]
+port = 54321
+schemas = ["public", "auth", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+
+[external]
+google_analytics_proxy_port = 54328
+
+[functions]
+port = 54321
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/*"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+redirect_uri = ""
+
+[storage]
+port = 54321
