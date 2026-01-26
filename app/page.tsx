@@ -33,6 +33,7 @@ import { tr } from "date-fns/locale"
 import { InstallPWAButton, UpdatePWAButton } from "@/components/pwa-manager"
 import { motion, AnimatePresence } from "framer-motion"
 import type { Dhikr } from "@/types/dhikr"
+import { formatNumber } from "@/lib/format-number"
 
 export default function Home() {
   const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr } = useDhikrs()
@@ -173,8 +174,8 @@ export default function Home() {
                           />
                         </div>
                         <div className="flex items-baseline gap-1 justify-center">
-                          <span className="text-2xl font-black text-primary">{dhikr.currentCount}</span>
-                          <span className="text-muted-foreground font-bold">/ {dhikr.targetCount}</span>
+                          <span className="text-2xl font-black text-primary">{formatNumber(dhikr.currentCount)}</span>
+                          <span className="text-muted-foreground font-bold">/ {formatNumber(dhikr.targetCount)}</span>
                         </div>
                       </div>
                     </CardContent>
