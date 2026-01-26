@@ -8,5 +8,6 @@ Bu proje, kullanıcıların zikirlerini dijital ortamda kolayca takip etmelerini
 ✅ **Hedef Belirleme** – Günlük, haftalık veya özel hedefler oluşturma  
 ✅ **Kayıt Tutma** – Yapılan zikirleri saklayarak geçmiş verilere erişme  
 ✅ **Tema Desteği** – Karanlık ve açık mod seçenekleri  
+✅ **Bulut Senkronizasyon** – Supabase ile zikirlerinizi tüm cihazlarınızda senkronize edin (Giriş yaparak)
 
 Projeyi incelemek ve katkıda bulunmak için **star** vermeyi unutmayın! ⭐

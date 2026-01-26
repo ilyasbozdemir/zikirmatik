@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen, Database, List } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
+import { AuthComponent } from "@/components/auth"
 
 interface SidebarProps {
   activeView: string
@@ -106,16 +107,22 @@ export function Sidebar({
         </Button>
       </div>
 
-      <div className="mt-auto">
-        <Button className="w-full" onClick={onAddDhikr}>
-          <Plus className="mr-2 h-5 w-5" />
-          Yeni Zikir Ekle
-        </Button>
-      </div>
+      <div className="mt-auto space-y-4">
+        <div className="pt-4 border-t">
+          <Button className="w-full mb-4" onClick={onAddDhikr}>
+            <Plus className="mr-2 h-5 w-5" />
+            Yeni Zikir Ekle
+          </Button>
+        </div>
 
-      <div className="mt-4 text-center">
-        <p className="text-sm text-muted-foreground">v1.1.0</p>
-        <p className="text-xs text-muted-foreground mt-1">Ömür boyu ücretsiz</p>
+        <div className="p-2 bg-muted/30 rounded-lg">
+          <AuthComponent />
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">v1.2.0-cloud</p>
+          <p className="text-xs text-muted-foreground mt-1">Ömür boyu ücretsiz • Bulut Senkronizasyon</p>
+        </div>
       </div>
     </div>
   )

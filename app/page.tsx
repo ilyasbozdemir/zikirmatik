@@ -60,6 +60,8 @@ import { InstallPWAButton, UpdatePWAButton, usePWA } from "@/components/pwa-mana
 import { RepeatDhikrModal } from "@/components/repeat-dhikr-modal"
 import { DhikrSeriesManager } from "@/components/dhikr-series-manager"
 import { DataMigrationManager } from "@/components/data-migration-manager"
+import { supabase } from "@/lib/supabase"
+import { dbService } from "@/lib/db-services"
 
 // Define the Dhikr type
 export type Dhikr = {
@@ -129,6 +131,8 @@ export default function Home() {
   const [dhikrToRepeat, setDhikrToRepeat] = useState<Dhikr | null>(null)
   const [showDhikrSeries, setShowDhikrSeries] = useState(false)
   const [showDataMigration, setShowDataMigration] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
   const { updateAvailable } = usePWA()
 
   // URL parametrelerini kontrol et
@@ -177,60 +181,102 @@ export default function Home() {
     }
   }, [])
 
-  // Load dhikrs from localStorage on component mount
+  // Supabase Auth Listener
   useEffect(() => {
-    try {
-      const savedDhikrs = getStorageItem("dhikrs", [])
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
 
-      // Migrate old format to new format if needed
-      const migratedDhikrs = savedDhikrs.map((dhikr: any) => {
-        // Ensure scheduledDays is an array of strings
-        if (dhikr.scheduledDays) {
-          // Handle case where scheduledDays might be in old format
-          if (typeof dhikr.scheduledDays === "string") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Load dhikrs from localStorage or Supabase on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true)
+      try {
+        let savedDhikrs = []
+
+        if (user) {
+          // Logged in: Try fetching from Supabase
+          savedDhikrs = await dbService.getDhikrs(user.id)
+
+          // If Supabase is empty, fallback to local and sync
+          if (savedDhikrs.length === 0) {
+            const localDhikrs = getStorageItem("dhikrs", [])
+            if (localDhikrs.length > 0) {
+              savedDhikrs = localDhikrs
+              await dbService.saveAllDhikrs(localDhikrs, user.id)
+            }
+          }
+        } else {
+          // Not logged in: Use localStorage
+          savedDhikrs = getStorageItem("dhikrs", [])
+        }
+
+        // Migrate old format to new format if needed
+        const migratedDhikrs = savedDhikrs.map((dhikr: any) => {
+          if (dhikr.scheduledDays && typeof dhikr.scheduledDays === "string") {
             try {
               dhikr.scheduledDays = JSON.parse(dhikr.scheduledDays)
             } catch (e) {
-              // If parsing fails, convert to array with the string
               dhikr.scheduledDays = [dhikr.scheduledDays]
             }
           }
+          if (dhikr.scheduledDays) {
+            dhikr.scheduledDays = dhikr.scheduledDays.map((day: string) => day.toLowerCase())
+          }
+          return dhikr
+        })
 
-          // Ensure all days are in lowercase format
-          dhikr.scheduledDays = dhikr.scheduledDays.map((day: string) => day.toLowerCase())
+        setDhikrs(migratedDhikrs)
+
+        const hasSeenIntro = getStorageItem("hasSeenIntro", false)
+        if (!hasSeenIntro) {
+          setShowHelp(true)
+          setStorageItem("hasSeenIntro", true)
         }
 
-        return dhikr
-      })
-
-      setDhikrs(migratedDhikrs)
-
-      // Check if it's the first time opening the app
-      const hasSeenIntro = getStorageItem("hasSeenIntro", false)
-      if (!hasSeenIntro) {
-        setShowHelp(true)
-        setStorageItem("hasSeenIntro", true)
+        checkScheduledDhikrs(migratedDhikrs)
+      } catch (error) {
+        console.error("Error loading dhikrs:", error)
+        setDhikrs([])
+      } finally {
+        setIsLoading(false)
       }
-
-      // Check for scheduled dhikrs
-      checkScheduledDhikrs(migratedDhikrs)
-    } catch (error) {
-      console.error("Error loading dhikrs:", error)
-      setDhikrs([])
-      setStorageItem("dhikrs", [])
-    } finally {
-      setIsLoading(false)
     }
-  }, [])
 
-  // Save dhikrs to localStorage whenever they change
+    loadData()
+  }, [user])
+
+  // Save dhikrs to localStorage and Supabase whenever they change
   useEffect(() => {
     if (!isLoading) {
       setStorageItem("dhikrs", dhikrs)
+
+      // If user is logged in, sync to cloud
+      if (user) {
+        const syncToCloud = async () => {
+          setIsSyncing(true)
+          try {
+            await dbService.saveAllDhikrs(dhikrs, user.id)
+          } catch (err) {
+            console.error("Cloud sync failed:", err)
+          } finally {
+            setIsSyncing(false)
+          }
+        }
+        syncToCloud()
+      }
+
       // Calculate streak
       calculateStreak()
     }
-  }, [dhikrs, isLoading])
+  }, [dhikrs, isLoading, user])
 
   // Check for scheduled dhikrs every minute
   useEffect(() => {
@@ -443,9 +489,17 @@ export default function Home() {
     })
   }
 
-  const deleteDhikr = (id: string) => {
+  const deleteDhikr = async (id: string) => {
     const dhikrToDelete = dhikrs.find((d) => d.id === id)
     setDhikrs((prev) => prev.filter((dhikr) => dhikr.id !== id))
+
+    if (user) {
+      try {
+        await dbService.deleteDhikr(id)
+      } catch (err) {
+        console.error("Cloud delete failed:", err)
+      }
+    }
 
     if (dhikrToDelete) {
       toast({
