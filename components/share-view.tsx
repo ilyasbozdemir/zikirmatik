@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 import { createShareableLink, createDataExportLink, importDataFromLink, extractSharedData } from "@/lib/share-utils"
 import { Badge } from "@/components/ui/badge"
 import {

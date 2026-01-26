@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, RotateCcw, Volume2, VolumeX, Vibrate, AlertTriangle } from "lucide-react"
-import type { Dhikr } from "@/app/page"
-import { motion } from "framer-motion"
+import type { Dhikr } from "@/types/dhikr"
+import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { formatNumber } from "@/lib/format-number"
 import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
@@ -119,7 +119,6 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
       if (!vibrationEnabled || !("vibrate" in navigator)) return
 
       try {
-        // Daha güçlü titreşim için değerleri artıralım
         if (typeof pattern === "number") {
           navigator.vibrate(pattern * 1.5)
         } else {
@@ -139,7 +138,6 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
     if (isDoubleTap) {
       setDoubleTapCount((prev) => prev + 1)
 
-      // Increment by 5 on triple tap (after 2 double taps)
       if (doubleTapCount >= 2) {
         if (count + 5 <= dhikr.targetCount) {
           setCount((prev) => prev + 5)
@@ -156,7 +154,6 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
         }
         setDoubleTapCount(0)
       } else {
-        // Increment by 2 on double tap
         if (count + 2 <= dhikr.targetCount) {
           setCount((prev) => prev + 2)
           playSound(dhikr.audio)
@@ -193,7 +190,6 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
       description: "Zikir sayacı sıfırlandı.",
     })
 
-    // Add stronger vibration for reset
     vibrate([50, 70, 50])
   }, [toast, vibrate])
 
@@ -207,9 +203,8 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
   }, [soundEnabled, setSoundEnabled, toast])
 
   const toggleVibration = useCallback(() => {
-    setVibrationEnabled((prev) => !prev)
+    setVibrationEnabled((prev: boolean) => !prev)
 
-    // Titreşim açıldığında test titreşimi yap
     if (!vibrationEnabled && "vibrate" in navigator) {
       setTimeout(() => {
         navigator.vibrate([30, 50, 30])
@@ -223,11 +218,9 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
   }, [vibrationEnabled, toast])
 
   const handleClose = useCallback(() => {
-    // Eğer zikir başladıysa ve tamamlanmadıysa, onay iste
     if (count > 0 && count < dhikr.targetCount) {
       setShowExitConfirm(true)
     } else {
-      // Zikir tamamlandıysa veya hiç başlamadıysa, direkt kapat
       if (autoSaveInterval) clearInterval(autoSaveInterval)
       onUpdate(dhikr.id, count)
       onClose()
@@ -303,40 +296,60 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <div className="text-7xl font-bold mb-2">{formatNumber(count)}</div>
-            <p className="text-muted-foreground">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
-            <p className="text-xs text-muted-foreground mt-2">Çift tıklama: +2 • Üçlü tıklama: +5</p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={count}
+                initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 1.2, y: 20 }}
+                transition={{ duration: 0.15 }}
+                className="text-7xl font-black bg-vibrant-gradient bg-clip-text text-transparent"
+              >
+                {formatNumber(count)}
+              </motion.div>
+            </AnimatePresence>
+            <p className="text-muted-foreground font-bold mt-2 lowercase tracking-widest opacity-60">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
           </motion.div>
 
           <div className="grid grid-cols-2 gap-4 w-full">
-            <Button variant="outline" size="lg" className="h-16 text-lg" onClick={resetCount}>
+            <Button variant="outline" size="lg" className="h-20 text-lg rounded-[2rem] border-2" onClick={resetCount}>
               <RotateCcw className="mr-2 h-5 w-5" /> Sıfırla
             </Button>
-            <Button variant="default" size="lg" className="h-16 text-lg" onClick={incrementCount}>
-              {count < dhikr.targetCount ? "Zikret" : "Tamamla"}
-            </Button>
+            <motion.div
+              whileTap={{ scale: 0.85 }}
+              whileHover={{ scale: 1.05 }}
+              className="relative"
+            >
+              <Button
+                variant="default"
+                size="lg"
+                className="w-full h-20 text-2xl font-black rounded-[2rem] bg-vibrant-gradient border-none shadow-premium premium-shimmer overflow-hidden active:brightness-110 transition-all"
+                onClick={incrementCount}
+              >
+                {count < dhikr.targetCount ? "Zikret" : "Tamamla"}
+              </Button>
+            </motion.div>
           </div>
+          <p className="text-[10px] text-muted-foreground mt-6 uppercase tracking-[0.3em] font-bold opacity-30">Hızlı sayım için ekrana seri dokunun</p>
         </div>
       </div>
 
       <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="glass rounded-[2rem] border-none shadow-premium">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center">
-              <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" /> Zikir Tamamlanmadı
+            <AlertDialogTitle className="flex items-center text-xl font-bold">
+              <AlertTriangle className="h-6 w-6 text-amber-500 mr-2" /> Tamamlanmadı
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              Zikir henüz tamamlanmadı. Çıkmak istediğinize emin misiniz? İlerlemeniz kaydedilecek ve daha sonra devam
-              edebilirsiniz.
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              Zikir henüz tamamlanmadı. İlerlemeniz otomatik olarak buluta kaydedilecek.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Devam Et</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmExit}>Çık ve Kaydet</AlertDialogAction>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel className="rounded-xl border-none bg-secondary">Devam Et</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmExit} className="rounded-xl bg-destructive text-white">Çık ve Kaydet</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
   )
 }
-

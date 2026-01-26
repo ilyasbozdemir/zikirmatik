@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { arabicDhikrs, specialDaysDhikrs, prayerDhikrs } from "@/lib/arabic-dhikrs"
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 
 interface ArabicDhikrViewProps {
   onClose: () => void

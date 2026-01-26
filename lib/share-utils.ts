@@ -1,4 +1,4 @@
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 
 /**
  * Zikir verilerini paylaşılabilir bir URL'ye dönüştürür

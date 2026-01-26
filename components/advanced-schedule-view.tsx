@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar, Clock, Check, Info, FileText, CalendarDays, CalendarRange } from "lucide-react"
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, isSameDay } from "date-fns"
 import { tr } from "date-fns/locale"
 import { Switch } from "@/components/ui/switch"
-import { commonDhikrs, arabicDhikrs } from "@/lib/arabic-dhikrs"
+import { PRESET_DHIKRS, arabicDhikrs } from "@/lib/arabic-dhikrs"
 
 interface AdvancedScheduleViewProps {
   dhikrs: Dhikr[]
@@ -322,7 +322,7 @@ export function AdvancedScheduleView({ dhikrs, setDhikrs, onClose }: AdvancedSch
     }
   }
 
-  const selectFromCollection = (preset: (typeof commonDhikrs)[0]) => {
+  const selectFromCollection = (preset: any) => {
     setCustomName(preset.name)
     setCustomCount(preset.count)
     setCustomCategory(preset.category || "Tesbih")
@@ -667,7 +667,7 @@ export function AdvancedScheduleView({ dhikrs, setDhikrs, onClose }: AdvancedSch
 
                     <TabsContent value="turkish" className="space-y-4">
                       <div className="grid grid-cols-1 gap-2">
-                        {commonDhikrs.map((dhikr) => (
+                        {PRESET_DHIKRS.map((dhikr) => (
                           <Button
                             key={dhikr.name}
                             variant="outline"
