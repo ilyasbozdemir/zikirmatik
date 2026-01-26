@@ -3,6 +3,8 @@ import "@/app/globals.css"
 import { Inter, Amiri } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import Script from "next/script"
+import { DhikrProvider } from "@/context/dhikr-context"
+import { AppLayout } from "@/components/app-layout"
 
 const inter = Inter({
   subsets: ["latin"],
