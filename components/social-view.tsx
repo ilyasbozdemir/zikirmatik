@@ -6,14 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { Search, User, Globe, Users, Heart, Share2, Plus, Loader2, X, Mail, Lock, CheckCircle2, UserPlus2, LogOut, ShieldCheck, KeyRound } from "lucide-react"
+import { Search, Globe, Users, Heart, Plus, Loader2, X, UserPlus2 } from "lucide-react"
 import { dbService } from "@/lib/db-services"
-import { supabase } from "@/lib/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
-import { useDhikrs } from "@/context/dhikr-context"
-import { formatNumber } from "@/lib/format-number"
 
 interface SocialViewProps {
     user: any
@@ -66,7 +63,7 @@ export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps)
     }
 
     return (
-        <div className="container max-w-md mx-auto p-4 flex flex-col h-screen bg-background overflow-hidden">
+        <div className="container max-w-md mx-auto p-4 flex flex-col h-screen bg-background overflow-hidden relative z-50">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Sosyal Alan</h1>
@@ -88,7 +85,7 @@ export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps)
                     </TabsTrigger>
                 </TabsList>
 
-                <div className="flex-1 overflow-y-auto pr-1 pb-20 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto pr-1 pb-24 custom-scrollbar">
                     <TabsContent value="discover" className="mt-0">
                         <div className="space-y-4">
                             {isLoading && <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}
@@ -187,112 +184,6 @@ export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps)
                                 </div>
                             )}
                         </div>
-                    </TabsContent>
-
-                    <TabsContent value="profile" className="mt-0">
-                        {user ? (
-                            <div className="space-y-6 pb-10">
-                                {/* Profile Card */}
-                                <Card className="border-none glass rounded-[2.5rem] overflow-hidden">
-                                    <div className="h-24 bg-vibrant-gradient w-full opacity-80" />
-                                    <CardContent className="px-6 pb-6 -mt-12 text-center">
-                                        <Avatar className="h-24 w-24 border-4 border-background mx-auto shadow-xl mb-4">
-                                            <AvatarImage src={profile?.avatar_url} />
-                                            <AvatarFallback className="text-3xl font-black bg-primary/5 text-primary">{username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="mb-6">
-                                            <h2 className="text-2xl font-black">@{username || 'isimsiz'}</h2>
-                                            <p className="text-sm font-medium text-muted-foreground">{email}</p>
-                                        </div>
-
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {[
-                                                { label: 'Toplam', val: totalDhikrs, color: 'text-primary' },
-                                                { label: 'Biten', val: completedDhikrs, color: 'text-green-500' },
-                                                { label: 'Aktif', val: activeDhikrs, color: 'text-blue-500' },
-                                                { label: 'Sayı', val: formatNumber(totalCount), color: 'text-amber-500' }
-                                            ].map((stat, i) => (
-                                                <div key={i} className="flex flex-col items-center p-2 rounded-2xl bg-background/40 shadow-inner">
-                                                    <span className={`text-xl font-black ${stat.color}`}>{stat.val}</span>
-                                                    <span className="text-[9px] font-black uppercase text-muted-foreground opacity-60 tracking-tighter">{stat.label}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Edit Sections */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 px-2 mb-2">
-                                        <User className="h-4 w-4 text-primary" />
-                                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Profil Kimliği</h3>
-                                    </div>
-                                    <div className="space-y-3 glass p-5 rounded-[2rem] border-none shadow-sm">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Kullanıcı Adı</label>
-                                            <Input
-                                                value={username}
-                                                onChange={(e) => setUsername(e.target.value)}
-                                                placeholder="kullanici_adi"
-                                                className="h-12 rounded-xl bg-background/50 border-none font-bold text-lg"
-                                            />
-                                        </div>
-                                        <Button className="w-full h-12 bg-vibrant-gradient text-white font-black rounded-xl shadow-lg border-none active:scale-95 transition-transform" onClick={handleUpdateProfile} disabled={isLoading}>
-                                            {isLoading ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
-                                            İsmi Güncelle
-                                        </Button>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 px-2 mb-2 mt-8">
-                                        <Lock className="h-4 w-4 text-primary" />
-                                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Hesap Güvenliği</h3>
-                                    </div>
-                                    <div className="space-y-4 glass p-5 rounded-[2rem] border-none shadow-sm">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 ml-1">E-Posta Adresi</label>
-                                            <div className="relative">
-                                                <Mail className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
-                                                <Input
-                                                    type="email"
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    className="h-12 pl-10 rounded-xl bg-background/50 border-none font-medium"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Yeni Şifre</label>
-                                            <div className="relative">
-                                                <KeyRound className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
-                                                <Input
-                                                    type="password"
-                                                    value={newPassword}
-                                                    onChange={(e) => setNewPassword(e.target.value)}
-                                                    placeholder="Değiştirmek istemiyorsanız boş bırakın"
-                                                    className="h-12 pl-10 rounded-xl bg-background/50 border-none font-medium"
-                                                />
-                                            </div>
-                                        </div>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full h-12 border-2 rounded-xl font-bold hover:bg-primary/5 transition-all"
-                                            onClick={handleUpdateAuth}
-                                            disabled={isUpdatingAuth || (email === user.email && !newPassword)}
-                                        >
-                                            {isUpdatingAuth ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : <Lock className="mr-2 h-5 w-5" />}
-                                            Güvenlik Bilgilerini Kaydet
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-20 glass rounded-[2.5rem] mt-10">
-                                <UserPlus2 className="h-16 w-16 mx-auto text-primary/20 mb-6" />
-                                <CardTitle className="text-2xl font-black mb-2">Eyvallah!</CardTitle>
-                                <p className="mb-8 text-muted-foreground font-medium px-10 leading-relaxed">Profilinizi yönetmek ve verilerinizi buluta kaydetmek için giriş yapmalısınız.</p>
-                                <Button onClick={onClose} variant="default" className="h-14 px-8 rounded-2xl bg-vibrant-gradient text-white border-none shadow-xl font-black italic">Hemen Giriş Yap</Button>
-                            </div>
-                        )}
                     </TabsContent>
                 </div>
             </Tabs>

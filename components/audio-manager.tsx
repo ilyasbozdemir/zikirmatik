@@ -13,37 +13,32 @@ export function useAudioManager() {
   const [isAudioLoaded, setIsAudioLoaded] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
 
-  // Ses dosyalarını yükle
+  // Ses dosyalarını yükle ve Tarayıcı kısıtlamalarını aş (Unlock)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      try {
-        // Click sesi için yeni bir Audio nesnesi oluştur
-        // Eğer dosya yoksa hata vermemesi için sessizce başarısız olmasını sağlayalım
-        const clickSound = new Audio("/click.mp3")
+      const clickSound = new Audio("/click.mp3")
+      clickSound.preload = "auto"
+      clickSound.volume = 0.5
 
-        const handleCanPlayThrough = () => {
+      const unlockAudio = () => {
+        clickSound.play().then(() => {
+          clickSound.pause()
+          clickSound.currentTime = 0
           setIsAudioLoaded(true)
-          setAudioError(null)
-          console.log("Audio system ready")
-        }
+          console.log("Audio Unlocked & Ready")
+        }).catch(e => console.warn("Audio unlock pending interaction"))
+        window.removeEventListener('click', unlockAudio)
+        window.removeEventListener('touchstart', unlockAudio)
+      }
 
-        const handleError = (e: any) => {
-          console.warn("Audio file issue:", e)
-          // Don't set isAudioLoaded to false permanently, let it try to play anyway
-        }
+      window.addEventListener('click', unlockAudio)
+      window.addEventListener('touchstart', unlockAudio)
 
-        clickSound.addEventListener("canplaythrough", handleCanPlayThrough)
-        clickSound.addEventListener("error", handleError)
+      clickSoundRef.current = clickSound
 
-        clickSound.load()
-        clickSoundRef.current = clickSound
-
-        return () => {
-          clickSound.removeEventListener("canplaythrough", handleCanPlayThrough)
-          clickSound.removeEventListener("error", handleError)
-        }
-      } catch (error) {
-        console.error("Audio error:", error)
+      return () => {
+        window.removeEventListener('click', unlockAudio)
+        window.removeEventListener('touchstart', unlockAudio)
       }
     }
   }, [])

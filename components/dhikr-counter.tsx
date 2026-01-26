@@ -96,11 +96,7 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
     (pattern: number | number[]) => {
       if (!vibrationEnabled || !("vibrate" in navigator)) return
       try {
-        if (typeof pattern === "number") {
-          navigator.vibrate(pattern * 1.5)
-        } else {
-          navigator.vibrate(pattern.map((p) => p * 1.5))
-        }
+        navigator.vibrate(pattern)
       } catch (error) {
         console.error("Vibration failed:", error)
       }
@@ -140,15 +136,13 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
       if (count < dhikr.targetCount) {
         setCount((prev) => prev + 1)
         playSound(dhikr.audio)
-        vibrate(30)
+        vibrate(20)
       }
     }
     setLastTapTime(now)
   }, [count, dhikr.targetCount, dhikr.audio, doubleTapCount, lastTapTime, playSound, vibrate])
 
   const resetCount = useCallback(() => {
-    setIsVibrating(true)
-    setTimeout(() => setIsVibrating(false), 500)
     setCount(0)
     toast({ title: "Sayaç sıfırlandı", description: "Zikir sayacı sıfırlandı." })
     vibrate([50, 70, 50])
@@ -156,22 +150,11 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
 
   const toggleSound = useCallback(() => {
     setSoundEnabled(!soundEnabled)
-    toast({
-      title: soundEnabled ? "Ses kapatıldı" : "Ses açıldı",
-      description: soundEnabled ? "Zikir sesleri kapatıldı." : "Zikir sesleri açıldı.",
-    })
-  }, [soundEnabled, setSoundEnabled, toast])
+  }, [soundEnabled, setSoundEnabled])
 
   const toggleVibration = useCallback(() => {
     setVibrationEnabled((prev: boolean) => !prev)
-    if (!vibrationEnabled && "vibrate" in navigator) {
-      setTimeout(() => { navigator.vibrate([30, 50, 30]) }, 300)
-    }
-    toast({
-      title: vibrationEnabled ? "Titreşim kapatıldı" : "Titreşim açıldı",
-      description: vibrationEnabled ? "Zikir titreşimleri kapatıldı." : "Zikir titreşimleri açıldı.",
-    })
-  }, [vibrationEnabled, toast])
+  }, [])
 
   const handleClose = useCallback(() => {
     if (count > 0 && count < dhikr.targetCount) {
@@ -191,8 +174,8 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-background z-[100] flex flex-col overflow-y-auto">
-        <div className="container max-w-md mx-auto p-4 flex-1 flex flex-col">
+      <div className="fixed inset-0 bg-background z-[101] flex flex-col overflow-y-auto overflow-x-hidden">
+        <div className="container max-w-md mx-auto p-4 flex-1 flex flex-col h-full">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Zikir Zamanı</h1>
@@ -205,53 +188,65 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
                 {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </Button>
               <Button variant="ghost" size="icon" onClick={toggleVibration}>
-                <Vibrate className={`h-5 w-5 ${vibrationEnabled ? "" : "opacity-50"}`} />
+                <Vibrate className={`h-5 w-5 ${vibrationEnabled ? "" : "opacity-30"}`} />
               </Button>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <motion.div className="text-center mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
-              {dhikr.arabicText && <p className="font-arabic text-2xl mb-2 leading-relaxed">{dhikr.arabicText}</p>}
-              <p className="text-muted-foreground font-bold opacity-60">Hedef: {formatNumber(dhikr.targetCount)}</p>
+          <div className="flex-1 flex flex-col items-center justify-center py-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-8"
+            >
+              <h2 className="text-3xl font-black mb-2 px-4">{dhikr.name}</h2>
+              {dhikr.arabicText && <p className="font-arabic text-3xl mb-3 leading-relaxed text-primary/80">{dhikr.arabicText}</p>}
+              <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px] opacity-60">Hedef: {formatNumber(dhikr.targetCount)}</p>
             </motion.div>
 
-            <motion.div className="w-full mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Progress value={progress} className="h-3 shadow-inner" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full mb-10 px-2">
+              <Progress value={progress} className="h-3 shadow-inner rounded-full border border-primary/5" />
             </motion.div>
 
-            <motion.div className={`text-center mb-12 ${isVibrating ? "animate-shake" : ""}`} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={`text-center mb-12`}
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={count}
                   initial={{ opacity: 0, scale: 0.8, y: -20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 1.2, y: 20 }}
-                  className="text-8xl font-black bg-vibrant-gradient bg-clip-text text-transparent"
+                  className="text-9xl font-black bg-vibrant-gradient bg-clip-text text-transparent select-none"
                 >
                   {formatNumber(count)}
                 </motion.div>
               </AnimatePresence>
-              <p className="text-muted-foreground font-black mt-4 uppercase tracking-[0.2em] opacity-40">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
+              <p className="text-muted-foreground font-black mt-4 uppercase tracking-[0.3em] opacity-40 text-xs">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
             </motion.div>
 
-            <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-              <Button variant="outline" size="lg" className="h-20 text-lg rounded-[2rem] border-2 border-primary/10 hover:bg-primary/5" onClick={resetCount}>
+            <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-2">
+              <Button variant="outline" size="lg" className="h-24 text-lg rounded-[2.5rem] border-2 border-primary/10 hover:bg-primary/5 font-black uppercase tracking-wider" onClick={resetCount}>
                 <RotateCcw className="mr-2 h-5 w-5" /> Sıfırla
               </Button>
-              <motion.div whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.05 }} className="relative">
+              <motion.div
+                whileTap={{ scale: 0.92 }}
+                whileHover={{ scale: 1.05 }}
+                className="relative"
+              >
                 <Button
                   variant="default"
                   size="lg"
-                  className="w-full h-20 text-2xl font-black rounded-[2rem] bg-vibrant-gradient border-none shadow-premium premium-shimmer overflow-hidden active:brightness-110"
+                  className="w-full h-24 text-2xl font-black rounded-[2.5rem] bg-vibrant-gradient border-none shadow-premium premium-shimmer overflow-hidden active:brightness-110 active:scale-95 transition-all text-white"
                   onClick={incrementCount}
                 >
                   {count < dhikr.targetCount ? "Zikret" : "Tamamla"}
                 </Button>
               </motion.div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-8 uppercase tracking-[0.3em] font-black opacity-30">Seri dokunuşla hızlı sayım yapabilirsiniz</p>
+            <p className="text-[10px] text-muted-foreground mt-10 uppercase tracking-[0.4em] font-black opacity-30 text-center">Hızlı sayım için seri dokunuş yapabilirsiniz</p>
           </div>
         </div>
       </div>
@@ -260,15 +255,15 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
         <AlertDialogContent className="glass rounded-[2rem] border-none shadow-premium">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center text-xl font-bold">
-              <AlertTriangle className="h-6 w-6 text-amber-500 mr-2" /> Tamamlanmadı
+              <AlertTriangle className="h-6 w-6 text-amber-500 mr-2" /> Ara Verilsin mi?
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-medium">
-              Zikir henüz tamamlanmadı. İlerlemeniz otomatik olarak kaydedilecek.
+            <AlertDialogDescription className="font-medium text-muted-foreground">
+              Zikir henüz tamamlanmadı. İlerlemeniz otomatik olarak güvenli bir şekilde kaydedilecek.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel className="rounded-xl border-none bg-secondary">Devam Et</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmExit} className="rounded-xl bg-destructive text-white">Çık ve Kaydet</AlertDialogAction>
+          <AlertDialogFooter className="flex gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl border-none bg-secondary font-bold flex-1">Devam Et</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmExit} className="rounded-xl bg-destructive text-white font-black flex-1">Kaydet ve Çık</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
