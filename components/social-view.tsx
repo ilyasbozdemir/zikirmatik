@@ -23,84 +23,21 @@ interface SocialViewProps {
 
 export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps) {
     const [activeTab, setActiveTab] = useState("discover")
-    const [profile, setProfile] = useState<any>(null)
-    const [username, setUsername] = useState("")
-    const [email, setEmail] = useState(user?.email || "")
-    const [newPassword, setNewPassword] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
     const [searchResults, setSearchResults] = useState<any[]>([])
     const [publicCollections, setPublicCollections] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [isUpdatingAuth, setIsUpdatingAuth] = useState(false)
     const { toast } = useToast()
-    const { dhikrs } = useDhikrs()
-
-    // Dhikr Stats
-    const totalDhikrs = dhikrs.length
-    const completedDhikrs = dhikrs.filter(d => d.status === 'completed').length
-    const activeDhikrs = totalDhikrs - completedDhikrs
-    const totalCount = dhikrs.reduce((acc, d) => acc + d.currentCount, 0)
 
     useEffect(() => {
-        if (user) {
-            loadProfile()
-            setEmail(user.email || "")
-        }
         loadPublicCollections()
-    }, [user])
-
-    const loadProfile = async () => {
-        const data = await dbService.getProfile(user.id)
-        if (data) {
-            setProfile(data)
-            setUsername(data.username || "")
-        }
-    }
+    }, [])
 
     const loadPublicCollections = async () => {
         setIsLoading(true)
         const data = await dbService.getPublicCollections()
         setPublicCollections(data)
         setIsLoading(false)
-    }
-
-    const handleUpdateProfile = async () => {
-        if (!username.trim()) return
-        setIsLoading(true)
-        try {
-            await dbService.updateProfile({
-                id: user.id,
-                username: username.trim(),
-                avatar_url: profile?.avatar_url
-            })
-            toast({ title: "Profil Güncellendi", description: "Kullanıcı adınız başarıyla kaydedildi." })
-            await loadProfile()
-        } catch (err) {
-            toast({ title: "Hata", description: "Profil güncellenemedi.", variant: "destructive" })
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleUpdateAuth = async () => {
-        setIsUpdatingAuth(true)
-        try {
-            const updates: any = {}
-            if (email !== user.email) updates.email = email
-            if (newPassword) updates.password = newPassword
-
-            if (Object.keys(updates).length === 0) return
-
-            const { error } = await supabase.auth.updateUser(updates)
-            if (error) throw error
-
-            toast({ title: "Güvenlik Güncellendi", description: "E-posta veya şifre başarıyla güncellendi." })
-            setNewPassword("")
-        } catch (err: any) {
-            toast({ title: "Hata", description: err.message, variant: "destructive" })
-        } finally {
-            setIsUpdatingAuth(false)
-        }
     }
 
     const handleSearch = async () => {
@@ -135,11 +72,6 @@ export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps)
                     <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Sosyal Alan</h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    {user && (
-                        <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()} className="rounded-2xl text-destructive hover:bg-destructive/10">
-                            <LogOut className="h-5 w-5" />
-                        </Button>
-                    )}
                     <Button variant="ghost" size="icon" onClick={onClose} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive">
                         <X className="h-6 w-6" />
                     </Button>
@@ -147,15 +79,12 @@ export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps)
             </div>
 
             <Tabs defaultValue="discover" className="flex-1 flex flex-col overflow-hidden" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3 mb-6 glass p-1 rounded-2xl h-14">
+                <TabsList className="grid w-full grid-cols-2 mb-6 glass p-1 rounded-2xl h-14">
                     <TabsTrigger value="discover" className="flex items-center gap-2 rounded-xl font-bold">
                         <Globe className="h-4 w-4" /> Keşfet
                     </TabsTrigger>
                     <TabsTrigger value="users" className="flex items-center gap-2 rounded-xl font-bold">
                         <Users className="h-4 w-4" /> Kişiler
-                    </TabsTrigger>
-                    <TabsTrigger value="profile" className="flex items-center gap-2 rounded-xl font-bold font-black">
-                        <User className="h-4 w-4" /> Profil
                     </TabsTrigger>
                 </TabsList>
 
