@@ -235,104 +235,108 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
 
   return (
     <>
-      <div className="container max-w-md mx-auto p-4 h-screen flex flex-col">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <ArrowLeft className="h-6 w-6" />
-            </Button>
-            <h1 className="text-2xl font-bold ml-2">Zikir Çek</h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={toggleSound} title={soundEnabled ? "Sesi Kapat" : "Sesi Aç"}>
-              {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleVibration}
-              title={vibrationEnabled ? "Titreşimi Kapat" : "Titreşimi Aç"}
-            >
-              <Vibrate className={`h-5 w-5 ${vibrationEnabled ? "" : "opacity-50"}`} />
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <motion.div
-            className="text-center mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
-            {dhikr.arabicText && <p className="font-arabic text-2xl mb-2 leading-relaxed">{dhikr.arabicText}</p>}
-            {dhikr.transliteration && dhikr.transliteration !== dhikr.name && (
-              <p className="text-sm text-muted-foreground mb-1">{dhikr.transliteration}</p>
-            )}
-            {dhikr.translation && <p className="text-xs text-muted-foreground mb-2">{dhikr.translation}</p>}
-            <p className="text-muted-foreground">Hedef: {formatNumber(dhikr.targetCount)}</p>
-            {dhikr.category && (
-              <div className="mt-2">
-                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
-                  {dhikr.category}
-                </span>
-              </div>
-            )}
-          </motion.div>
-
-          <motion.div
-            className="w-full mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <Progress value={progress} className="h-3" />
-          </motion.div>
-
-          <motion.div
-            className={`text-center mb-12 ${isVibrating ? "animate-shake" : ""}`}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={count}
-                initial={{ opacity: 0, scale: 0.8, y: -20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 1.2, y: 20 }}
-                transition={{ duration: 0.15 }}
-                className="text-7xl font-black bg-vibrant-gradient bg-clip-text text-transparent"
-              >
-                {formatNumber(count)}
-              </motion.div>
-            </AnimatePresence>
-            <p className="text-muted-foreground font-bold mt-2 lowercase tracking-widest opacity-60">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 gap-4 w-full">
-            <Button variant="outline" size="lg" className="h-20 text-lg rounded-[2rem] border-2" onClick={resetCount}>
-              <RotateCcw className="mr-2 h-5 w-5" /> Sıfırla
-            </Button>
-            <motion.div
-              whileTap={{ scale: 0.85 }}
-              whileHover={{ scale: 1.05 }}
-              className="relative"
-            >
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full h-20 text-2xl font-black rounded-[2rem] bg-vibrant-gradient border-none shadow-premium premium-shimmer overflow-hidden active:brightness-110 transition-all"
-                onClick={incrementCount}
-              >
-                {count < dhikr.targetCount ? "Zikret" : "Tamamla"}
+      <div className="fixed inset-0 bg-background z-[100] flex flex-col overflow-y-auto">
+        <div className="container max-w-md mx-auto p-4 flex-1 flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <Button variant="ghost" size="icon" onClick={handleClose}>
+                <ArrowLeft className="h-6 w-6" />
               </Button>
-            </motion.div>
+              <h1 className="text-2xl font-bold ml-2">Zikir Çek</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="icon" onClick={toggleSound} title={soundEnabled ? "Sesi Kapat" : "Sesi Aç"}>
+                {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleVibration}
+                title={vibrationEnabled ? "Titreşimi Kapat" : "Titreşimi Aç"}
+              >
+                <Vibrate className={`h-5 w-5 ${vibrationEnabled ? "" : "opacity-50"}`} />
+              </Button>
+            </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-6 uppercase tracking-[0.3em] font-bold opacity-30">Hızlı sayım için ekrana seri dokunun</p>
+
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <motion.div
+              className="text-center mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-3xl font-bold mb-2">{dhikr.name}</h2>
+              {dhikr.arabicText && <p className="font-arabic text-2xl mb-2 leading-relaxed">{dhikr.arabicText}</p>}
+              {dhikr.transliteration && dhikr.transliteration !== dhikr.name && (
+                <p className="text-sm text-muted-foreground mb-1">{dhikr.transliteration}</p>
+              )}
+              {dhikr.translation && <p className="text-xs text-muted-foreground mb-2">{dhikr.translation}</p>}
+              <p className="text-muted-foreground">Hedef: {formatNumber(dhikr.targetCount)}</p>
+              {dhikr.category && (
+                <div className="mt-2">
+                  <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
+                    {dhikr.category}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              className="w-full mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <Progress value={progress} className="h-3" />
+            </motion.div>
+
+            <motion.div
+              className={`text-center mb-12 ${isVibrating ? "animate-shake" : ""}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={count}
+                  initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 1.2, y: 20 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-7xl font-black bg-vibrant-gradient bg-clip-text text-transparent"
+                >
+                  {formatNumber(count)}
+                </motion.div>
+              </AnimatePresence>
+              <p className="text-muted-foreground font-bold mt-2 lowercase tracking-widest opacity-60">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
+            </motion.div>
+
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <Button variant="outline" size="lg" className="h-20 text-lg rounded-[2rem] border-2" onClick={resetCount}>
+                <RotateCcw className="mr-2 h-5 w-5" /> Sıfırla
+              </Button>
+              <motion.div
+                whileTap={{ scale: 0.85 }}
+                whileHover={{ scale: 1.05 }}
+                className="relative"
+              >
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full h-20 text-2xl font-black rounded-[2rem] bg-vibrant-gradient border-none shadow-premium premium-shimmer overflow-hidden active:brightness-110 transition-all"
+                  onClick={incrementCount}
+                >
+                  {count < dhikr.targetCount ? "Zikret" : "Tamamla"}
+                </Button>
+              </motion.div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-6 uppercase tracking-[0.3em] font-bold opacity-30">Hızlı sayım için ekrana seri dokunun</p>
+          </div>
         </div>
+
       </div>
+    </div >
 
       <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
         <AlertDialogContent className="glass rounded-[2rem] border-none shadow-premium">
@@ -350,6 +354,6 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
-  )
+      </>
+      )
 }

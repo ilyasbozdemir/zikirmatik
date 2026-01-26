@@ -28,6 +28,12 @@ export default function Home() {
   const [activeDhikr, setActiveDhikr] = useState<any>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [activeTab, setActiveTab] = useState("planned")
+
+  const handleRepeat = (dhikr: Dhikr) => {
+    repeatDhikr(dhikr)
+    setActiveTab("planned")
+  }
 
   const plannedDhikrs = dhikrs.filter((d) => d.status !== "completed")
   const completedDhikrs = dhikrs.filter((d) => d.status === "completed")
@@ -87,7 +93,7 @@ export default function Home() {
         </div>
       </div>
 
-      <Tabs defaultValue="planned" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8 glass p-1.5 rounded-2xl h-14">
           <TabsTrigger value="planned" className="rounded-xl text-md font-bold data-[state=active]:shadow-lg">Çekilecekler</TabsTrigger>
           <TabsTrigger value="recent" className="rounded-xl text-md font-bold data-[state=active]:shadow-lg">Geçmiş</TabsTrigger>
@@ -179,7 +185,7 @@ export default function Home() {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => repeatDhikr(dhikr)}>
+                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => handleRepeat(dhikr)}>
                         <Plus className="h-5 w-5" />
                       </Button>
                     </div>
