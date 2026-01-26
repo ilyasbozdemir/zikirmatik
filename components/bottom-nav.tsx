@@ -9,8 +9,11 @@ interface BottomNavProps {
   onAddDhikr: () => void
 }
 
+import { useDhikrs } from "@/context/dhikr-context"
+
 export function BottomNav({ onAddDhikr }: BottomNavProps) {
   const pathname = usePathname()
+  const { user } = useDhikrs()
   const isActive = (path: string) => pathname === path
 
   const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => (
@@ -40,7 +43,7 @@ export function BottomNav({ onAddDhikr }: BottomNavProps) {
       </div>
 
       <NavItem href="/social" icon={Globe} label="Keşfet" />
-      <NavItem href="/profile" icon={User} label="Profil" />
+      <NavItem href={user ? "/profile" : "/login"} icon={User} label="Profil" />
     </div>
   )
 }

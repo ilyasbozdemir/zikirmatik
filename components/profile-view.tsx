@@ -42,7 +42,7 @@ export function ProfileView() {
             loadProfile()
             setEmail(user.email || "")
         } else if (!isContextLoading) {
-            router.push('/')
+            router.push('/login')
         }
     }, [user, isContextLoading, router])
 
