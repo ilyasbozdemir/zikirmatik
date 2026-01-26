@@ -49,21 +49,41 @@ export function SuccessScreen({ onClose }: SuccessScreenProps) {
   }, [])
 
   return (
-    <div className="container max-w-md mx-auto p-4 h-screen flex flex-col items-center justify-center">
+    <div className="fixed inset-0 bg-background z-[200] flex flex-col items-center justify-center p-6 text-center">
       <motion.div
-        className="text-center"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        className="glass p-10 rounded-[3rem] shadow-premium max-w-sm w-full relative overflow-hidden"
+        initial={{ scale: 0.8, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ type: "spring", damping: 15 }}
       >
-        <div className="flex justify-center mb-6">
-          <CheckCircle className="h-24 w-24 text-green-500" />
-        </div>
-        <h1 className="text-3xl font-bold mb-4">Tebrikler!</h1>
-        <p className="text-xl text-muted-foreground mb-8">Zikir başarıyla tamamlandı.</p>
-        <Button size="lg" className="w-full" onClick={onClose}>
-          <Home className="mr-2 h-5 w-5" /> Ana Sayfaya Dön
-        </Button>
+        <div className="absolute top-0 left-0 w-full h-2 bg-vibrant-gradient" />
+
+        <motion.div
+          className="flex justify-center mb-8"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+        >
+          <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center shadow-inner">
+            <CheckCircle className="h-16 w-16 text-green-500" />
+          </div>
+        </motion.div>
+
+        <h1 className="text-4xl font-black mb-3 tracking-tight bg-vibrant-gradient bg-clip-text text-transparent italic">Maaşallah!</h1>
+        <p className="text-lg text-muted-foreground font-medium mb-10 leading-relaxed">Zikrinizi başarıyla tamamladınız. Allah kabul etsin.</p>
+
+        <motion.div
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <Button
+            size="lg"
+            className="w-full h-16 bg-vibrant-gradient text-white text-xl font-black rounded-2xl border-none shadow-xl premium-shimmer overflow-hidden"
+            onClick={onClose}
+          >
+            <Home className="mr-3 h-6 w-6 fill-current" /> Devam Et
+          </Button>
+        </motion.div>
       </motion.div>
     </div>
   )
