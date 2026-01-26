@@ -46,7 +46,7 @@ export function Sidebar({ onAddDhikr }: SidebarProps) {
       <div className="space-y-1 overflow-y-auto pr-2 custom-scrollbar flex-1">
         <NavItem href="/" icon={Home} label="Ana Sayfa" />
         <NavItem href="/stats" icon={BarChart3} label="İstatistikler" />
-        <NavItem href="/profile" icon={User} label="Profilim" />
+        <NavItem href={user ? "/profile" : "/login"} icon={User} label="Profilim" />
         <NavItem href="/schedule" icon={Clock} label="Planlama" />
         <NavItem href="/social" icon={Globe} label="Keşfet & Sosyal" />
         <NavItem href="/library" icon={BookOpen} label="Kütüphane" />
