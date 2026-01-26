@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button"
 import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen, Database, List, Globe } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { AuthComponent } from "@/components/auth"
