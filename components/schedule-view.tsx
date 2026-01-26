@@ -5,13 +5,13 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Plus, Calendar, Clock, Check, FileText } from "lucide-react"
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { commonDhikrs } from "@/app/page"
+import { PRESET_DHIKRS } from "@/lib/arabic-dhikrs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { formatNumber } from "@/lib/format-number"
@@ -33,7 +33,7 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose, onAdvancedSchedule }:
   const [customCategory, setCustomCategory] = useState("Tesbih")
   const { toast } = useToast()
 
-  const plannedDhikrs = dhikrs.filter((d) => d.status === "planned" || d.status === "in-progress")
+  const plannedDhikrs = (dhikrs || []).filter((d) => d.status === "planned" || d.status === "in-progress")
   const scheduledDhikrs = plannedDhikrs.filter((d) => d.scheduledDays && d.scheduledTime)
 
   const weekdays = [
@@ -155,7 +155,7 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose, onAdvancedSchedule }:
     setSelectedTime(dhikr.scheduledTime || "08:00")
   }
 
-  const selectFromCollection = (preset: (typeof commonDhikrs)[0]) => {
+  const selectFromCollection = (preset: any) => {
     setCustomName(preset.name)
     setCustomCount(preset.count)
     setCustomCategory(preset.category || "Tesbih")
@@ -338,7 +338,7 @@ export function ScheduleView({ dhikrs, setDhikrs, onClose, onAdvancedSchedule }:
               <TabsContent value="collection">
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-2">
-                    {commonDhikrs.map((dhikr) => (
+                    {(PRESET_DHIKRS || []).map((dhikr) => (
                       <Button
                         key={dhikr.name}
                         variant="outline"

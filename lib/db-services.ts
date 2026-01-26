@@ -1,5 +1,5 @@
 import { supabase } from "./supabase"
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 
 export const dbService = {
   async getDhikrs(userId?: string): Promise<Dhikr[]> {
