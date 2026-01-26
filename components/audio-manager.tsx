@@ -18,34 +18,33 @@ export function useAudioManager() {
     if (typeof window !== "undefined") {
       try {
         // Click sesi için yeni bir Audio nesnesi oluştur
+        // Eğer dosya yoksa hata vermemesi için sessizce başarısız olmasını sağlayalım
         const clickSound = new Audio("/click.mp3")
 
-        // Ses dosyası yüklendiğinde
-        clickSound.addEventListener("canplaythrough", () => {
+        const handleCanPlayThrough = () => {
           setIsAudioLoaded(true)
-          console.log("Ses dosyası başarıyla yüklendi")
-        })
+          setAudioError(null)
+        }
 
-        // Hata durumunda
-        clickSound.addEventListener("error", (e) => {
-          console.error("Ses dosyası yüklenirken hata:", e)
-          setAudioError("Ses dosyası yüklenemedi")
-        })
+        const handleError = () => {
+          // Çok fazla log basmamak için uyaralım ama sistemi kitlemeyelim
+          console.warn("Varsayılan ses dosyası (/click.mp3) bulunamadı. Sessiz modda çalışacak.")
+          setIsAudioLoaded(false)
+          // Hata göstermiyoruz ki kullanıcıyı rahatsız etmeyelim, sadece ses çıkmayacak
+        }
 
-        // Ses dosyasını yüklemeye başla
+        clickSound.addEventListener("canplaythrough", handleCanPlayThrough)
+        clickSound.addEventListener("error", handleError)
+
         clickSound.load()
-
-        // Referansı sakla
         clickSoundRef.current = clickSound
 
-        // Temizlik fonksiyonu
         return () => {
-          clickSound.removeEventListener("canplaythrough", () => setIsAudioLoaded(true))
-          clickSound.removeEventListener("error", (e) => setAudioError("Ses dosyası yüklenemedi"))
+          clickSound.removeEventListener("canplaythrough", handleCanPlayThrough)
+          clickSound.removeEventListener("error", handleError)
         }
       } catch (error) {
-        console.error("Ses yöneticisi oluşturulurken hata:", error)
-        setAudioError("Ses sistemi başlatılamadı")
+        console.error("Audio error:", error)
       }
     }
   }, [])
