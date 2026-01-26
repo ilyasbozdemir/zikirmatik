@@ -8,6 +8,7 @@ import { AddDhikrForm } from "@/components/add-dhikr-form"
 import { useDhikrs } from "@/context/dhikr-context"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useRouter } from "next/navigation"
+import { MigrationManager } from "@/components/migration-manager"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const isMobile = useMobile()
@@ -23,6 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className={`flex ${!isMobile ? "flex-row" : "flex-col"} min-h-screen bg-background`}>
+            <MigrationManager />
             {!isMobile && <Sidebar onAddDhikr={() => setShowAddForm(true)} />}
 
             <main className={`flex-1 ${!isMobile ? "ml-64" : "pb-20"}`}>
