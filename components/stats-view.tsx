@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar, BarChart3 } from "lucide-react"
-import type { Dhikr } from "@/app/page"
+import type { Dhikr } from "@/types/dhikr"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isToday, isSameDay } from "date-fns"

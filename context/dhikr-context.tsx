@@ -5,7 +5,7 @@ import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
 import { supabase } from "@/lib/supabase"
 import { dbService } from "@/lib/db-services"
 import { useToast } from "@/hooks/use-toast"
-import { Dhikr } from "@/app/page"
+import { Dhikr } from "@/types/dhikr"
 
 interface DhikrContextType {
     dhikrs: Dhikr[]
