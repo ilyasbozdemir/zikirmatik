@@ -65,7 +65,7 @@ export function Sidebar({ onAddDhikr }: SidebarProps) {
         </Button>
 
         {!user && (
-          <div className="p-4 glass rounded-2xl border border-primary/10 bg-primary/5 text-center space-y-3">
+          <div className="p-4 rounded-2xl border border-primary/10 bg-primary/5 backdrop-blur-sm text-center space-y-3">
             <p className="text-xs font-medium text-muted-foreground">Verilerinizi yedeklemek için giriş yapın.</p>
             <Button variant="outline" className="w-full h-10 rounded-xl font-bold border-2" asChild>
               <Link href="/login">Giriş Yap / Kayıt Ol</Link>
