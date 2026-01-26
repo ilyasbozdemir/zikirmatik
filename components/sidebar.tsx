@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen, Database, List } from "lucide-react"
+import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen, Database, List, Globe } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { AuthComponent } from "@/components/auth"
 
@@ -58,6 +58,15 @@ export function Sidebar({
         >
           <Clock className="mr-2 h-5 w-5" />
           Planlama
+        </Button>
+
+        <Button
+          variant={activeView === "social" ? "default" : "ghost"}
+          className="w-full justify-start"
+          onClick={() => onNavigate("social")}
+        >
+          <Globe className="mr-2 h-5 w-5" />
+          Keşfet & Sosyal
         </Button>
 
         <Button

@@ -176,8 +176,20 @@ export function InstallPWAButton() {
   const { isInstalled, isIOS, canInstall, installApp } = usePWA()
   const { toast } = useToast()
   const [showIOSHelp, setShowIOSHelp] = useState(false)
+  const [showPrompt, setShowPrompt] = useState(false)
+
+  useEffect(() => {
+    // Show prompt after 10 seconds if not installed
+    const timer = setTimeout(() => {
+      if (!isInstalled && canInstall) {
+        setShowPrompt(true)
+      }
+    }, 10000)
+    return () => clearTimeout(timer)
+  }, [isInstalled, canInstall])
 
   const handleInstallClick = async () => {
+    setShowPrompt(false)
     if (isIOS) {
       setShowIOSHelp(true)
       return
@@ -185,7 +197,6 @@ export function InstallPWAButton() {
 
     const result = await installApp()
     if (!result.success) {
-      // Kurulum başarısız olduğunda veya desteklenmediğinde
       toast({
         title: "Kurulum Bilgisi",
         description: "Tarayıcınız PWA kurulumunu desteklemiyor veya uygulama zaten kurulu.",
@@ -193,26 +204,42 @@ export function InstallPWAButton() {
     }
   }
 
-  if (isInstalled) {
-    return (
-      <Button variant="outline" size="sm" className="w-full" disabled>
-        <Check className="mr-2 h-4 w-4" /> Uygulama Kurulu
-      </Button>
-    )
-  }
+  if (isInstalled) return null
 
   return (
     <>
+      <AlertDialog open={showPrompt} onOpenChange={setShowPrompt}>
+        <AlertDialogContent className="glass border-primary/20">
+          <AlertDialogHeader>
+            <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+              <Download className="text-white h-8 w-8" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">Uygulama Olarak Kullan</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Zikirmatik'i ana ekranınıza ekleyerek daha hızlı erişebilir ve çevrimdışı kullanabilirsiniz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2">
+            <Button className="w-full bg-primary hover:bg-primary/90" onClick={handleInstallClick}>
+              Şimdi Yükle
+            </Button>
+            <AlertDialogAction className="w-full variant-ghost border-none bg-transparent text-muted-foreground hover:bg-muted" onClick={() => setShowPrompt(false)}>
+              Daha Sonra
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Button
         variant="outline"
         size="sm"
-        className="w-full"
-        onClick={handleInstallClick}
-        disabled={!canInstall && !isIOS}
+        className="w-full premium-shimmer"
+        onClick={() => setShowPrompt(true)}
       >
         <Download className="mr-2 h-4 w-4" />
-        {isIOS ? "Ana Ekrana Ekle" : "Uygulamayı Kur"}
+        Uygulamayı Kur
       </Button>
+      {/* IOS Help remains the same */}
 
       <AlertDialog open={showIOSHelp} onOpenChange={setShowIOSHelp}>
         <AlertDialogContent>

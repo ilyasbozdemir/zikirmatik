@@ -121,11 +121,61 @@ export function StatsView({ dhikrs, onClose }: StatsViewProps) {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="daily">Günlük</TabsTrigger>
           <TabsTrigger value="weekly">Haftalık</TabsTrigger>
+          <TabsTrigger value="calendar">Takvim</TabsTrigger>
           <TabsTrigger value="categories">Kategoriler</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="calendar" className="space-y-4">
+          <Card className="glass border-primary/10">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-lg">Zikir Takvimi</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="rounded-xl border bg-card/50 p-2">
+                {/* 
+                  Note: Using a custom calendar layout for better control.
+                  Showing completion intensity via background opacity.
+                */}
+                <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                  {['Pt', 'Sa', 'Çr', 'Pr', 'Cu', 'Ct', 'Pz'].map(d => (
+                    <div key={d} className="text-[10px] font-bold text-muted-foreground">{d}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: 35 }).map((_, i) => {
+                    const dayDate = new Date(today.getFullYear(), today.getMonth(), i - today.getDay() + 2);
+                    const isDayCompleted = completedDhikrs.some(d => isSameDay(new Date(d.dateCompleted!), dayDate));
+                    const isCurrentDay = isSameDay(dayDate, today);
+
+                    return (
+                      <div
+                        key={i}
+                        className={`aspect-square rounded-md flex items-center justify-center text-xs relative
+                          ${isDayCompleted ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'bg-muted/30'}
+                          ${isCurrentDay ? 'border-2 border-primary/50' : ''}
+                        `}
+                      >
+                        {dayDate.getDate()}
+                        {isDayCompleted && <div className="absolute bottom-1 w-1 h-1 bg-white rounded-full" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-primary rounded-sm" /> Tamamlandı
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-muted rounded-sm" /> Planlandı/Boş
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="daily" className="space-y-4">
           <Card>

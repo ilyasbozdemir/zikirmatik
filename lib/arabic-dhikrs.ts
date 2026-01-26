@@ -156,7 +156,7 @@ export const prayerDhikrs = [
   },
 ]
 
-export const commonDhikrs = [
+export const PRESET_DHIKRS = [
   { name: "Sübhanallah", count: 33, category: "Tesbih" },
   { name: "Elhamdülillah", count: 33, category: "Tesbih" },
   { name: "Allah'ü Ekber", count: 33, category: "Tesbih" },

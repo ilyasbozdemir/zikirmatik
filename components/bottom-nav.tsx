@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, Settings, Plus, HelpCircle, BookOpen, List } from "lucide-react"
+import { Home, Settings, Plus, HelpCircle, BookOpen, List, Globe } from "lucide-react"
 
 interface BottomNavProps {
   activeView: string
@@ -32,11 +32,21 @@ export function BottomNav({
         <Home className="h-5 w-5" />
       </Button>
 
-      <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={onDhikrLibrary}>
+      <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={onDhikrLibrary} title="Kütüphane">
         <BookOpen className="h-5 w-5" />
       </Button>
 
-      <Button variant="default" size="icon" className="h-12 w-12 rounded-full shadow-lg -mt-6" onClick={onAddDhikr}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={activeView === "social" ? "text-primary" : "text-muted-foreground"}
+        onClick={() => onNavigate("social")}
+        title="Keşfet"
+      >
+        <Globe className="h-5 w-5" />
+      </Button>
+
+      <Button variant="default" size="icon" className="h-12 w-12 rounded-full shadow-lg -mt-6" onClick={onAddDhikr} title="Ekle">
         <Plus className="h-6 w-6" />
       </Button>
 
@@ -45,6 +55,7 @@ export function BottomNav({
         size="icon"
         className={activeView === "series" ? "text-primary" : "text-muted-foreground"}
         onClick={onDhikrSeries}
+        title="Seriler"
       >
         <List className="h-5 w-5" />
       </Button>
@@ -54,6 +65,7 @@ export function BottomNav({
         size="icon"
         className={activeView === "settings" || activeView === "help" ? "text-primary" : "text-muted-foreground"}
         onClick={() => onNavigate(activeView === "help" ? "settings" : "help")}
+        title="Ayarlar/Yardım"
       >
         {activeView === "help" ? <Settings className="h-5 w-5" /> : <HelpCircle className="h-5 w-5" />}
       </Button>

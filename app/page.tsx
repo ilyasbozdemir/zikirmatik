@@ -54,12 +54,13 @@ import { ShareView } from "@/components/share-view"
 import { ArabicDhikrView } from "@/components/arabic-dhikr-view"
 import { AdvancedScheduleView } from "@/components/advanced-schedule-view"
 import { DhikrLibrary } from "@/components/dhikr-library"
-import { arabicDhikrs } from "@/lib/arabic-dhikrs"
+import { arabicDhikrs, PRESET_DHIKRS } from "@/lib/arabic-dhikrs"
 import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
 import { InstallPWAButton, UpdatePWAButton, usePWA } from "@/components/pwa-manager"
 import { RepeatDhikrModal } from "@/components/repeat-dhikr-modal"
 import { DhikrSeriesManager } from "@/components/dhikr-series-manager"
 import { DataMigrationManager } from "@/components/data-migration-manager"
+import { SocialView } from "@/components/social-view"
 import { supabase } from "@/lib/supabase"
 import { dbService } from "@/lib/db-services"
 
@@ -91,19 +92,6 @@ export type Dhikr = {
   seriesId?: string
   audio?: string
 }
-
-// Common Islamic dhikrs in Turkish
-export const commonDhikrs = [
-  { name: "Sübhanallah", count: 33, category: "Tesbih" },
-  { name: "Elhamdülillah", count: 33, category: "Tesbih" },
-  { name: "Allah'ü Ekber", count: 33, category: "Tesbih" },
-  { name: "La ilahe illallah", count: 100, category: "Tevhid" },
-  { name: "Estağfirullah", count: 100, category: "İstiğfar" },
-  { name: "Hasbünallahü ve ni'mel vekil", count: 33, category: "Dua" },
-  { name: "La havle vela kuvvete illa billah", count: 33, category: "Dua" },
-  { name: "Sübhanallahi ve bihamdihi", count: 100, category: "Tesbih" },
-  { name: "Sübhanallahi'l-azim", count: 33, category: "Tesbih" },
-]
 
 export default function Home() {
   const [dhikrs, setDhikrs] = useState<Dhikr[]>([])
@@ -386,7 +374,7 @@ export default function Home() {
         const nextInSeries = updatedDhikrs.find(
           (d) =>
             d.seriesId === completedDhikr.seriesId &&
-            d.seriesIndex === completedDhikr.seriesIndex + 1 &&
+            d.seriesIndex === (completedDhikr.seriesIndex ?? 0) + 1 &&
             d.status === "planned",
         )
 
@@ -640,7 +628,7 @@ export default function Home() {
     setSelectedCategory(null)
   }
 
-  const quickAddDhikr = (preset: (typeof commonDhikrs)[0]) => {
+  const quickAddDhikr = (preset: (typeof PRESET_DHIKRS)[0]) => {
     const newDhikr: Dhikr = {
       id: Date.now().toString(),
       name: preset.name,
@@ -718,6 +706,14 @@ export default function Home() {
         setShowSchedule(false)
         setShowDhikrSeries(false)
         setShowDataMigration(true)
+        break
+      case "social":
+        setShowStats(false)
+        setShowHelp(false)
+        setShowSettings(false)
+        setShowSchedule(false)
+        setShowDhikrSeries(false)
+        setShowDataMigration(false)
         break
     }
   }
@@ -990,6 +986,19 @@ export default function Home() {
     return <DataMigrationManager onClose={() => setShowDataMigration(false)} onReload={reloadApp} />
   }
 
+  if (activeView === "social") {
+    return (
+      <SocialView
+        user={user}
+        onClose={() => handleNavigation("home")}
+        onAddDhikrSeries={(dhikrs) => {
+          handleAddDhikrSeries(dhikrs)
+          handleNavigation("home")
+        }}
+      />
+    )
+  }
+
   return (
     <div className={`flex ${!isMobile ? "flex-row" : "flex-col"} min-h-screen`}>
       {!isMobile && (
@@ -1149,11 +1158,11 @@ export default function Home() {
                   >
                     Tümü
                   </Button>
-                  {categories.map((category) => (
+                  {categories.map((category: string) => (
                     <Button
                       key={category}
                       variant={selectedCategory === category ? "default" : "outline"}
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => setSelectedCategory(category || null)}
                       className="justify-start"
                     >
                       {category}
@@ -1193,7 +1202,7 @@ export default function Home() {
 
                 <TabsContent value="quick">
                   <div className="grid grid-cols-1 gap-2">
-                    {commonDhikrs.map((dhikr) => (
+                    {PRESET_DHIKRS.map((dhikr) => (
                       <Button
                         key={dhikr.name}
                         variant="outline"
@@ -1215,7 +1224,7 @@ export default function Home() {
                 <TabsContent value="collections">
                   {(() => {
                     // localStorage'dan koleksiyonları al
-                    const savedCollections = getStorageItem("dhikrCollections", [])
+                    const savedCollections = getStorageItem("dhikrCollections", []) as any[]
 
                     if (savedCollections.length === 0) {
                       return (
@@ -1234,7 +1243,7 @@ export default function Home() {
 
                     return (
                       <div className="grid grid-cols-1 gap-2">
-                        {savedCollections.map((collection) => (
+                        {savedCollections.map((collection: any) => (
                           <Card key={collection.id} className="overflow-hidden">
                             <CardHeader className="p-3 pb-1">
                               <CardTitle className="text-base">{collection.name}</CardTitle>
