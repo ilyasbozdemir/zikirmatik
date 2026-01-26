@@ -1,22 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// EN: Hardcoding keys to ensure local development connectivity.
+// TR: Yerel geliştirmede bağlantı sorununu kesin çözmek için anahtarları doğrudan tanımlıyoruz.
+const supabaseUrl = "https://eqykpbouvukybteyiztz.supabase.co"
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxeWtwYm91dnVreWJ0ZXlpenR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4ODQ4OTEsImV4cCI6MjA4NDQ2MDg5MX0.jbbywIxeFKYX2Hc3QV_i5uZr2O2t4Odzj3oz32ancE8"
 
-// Supabase yapılandırmasının tam olup olmadığını kontrol et
-export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey
+export const isSupabaseConfigured = true
 
-if (!isSupabaseConfigured) {
-  console.warn('Supabase URL or Anon Key is missing. auth will likely fail.')
-}
-
-// Build sırasında hata almamak için boş olsa bile geçerli bir URL formatı veriyoruz.
-// Bu sadece "supabaseUrl is required" hatasını engellemek içindir.
-// isSupabaseConfigured false olduğu sürece uygulama bu client'ı kullanmaya çalışmayacaktır.
-const validUrl = supabaseUrl || 'https://v0-build-placeholder.supabase.co'
-const validKey = supabaseAnonKey || 'v0-build-placeholder'
-
-export const supabase = createClient(validUrl, validKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
