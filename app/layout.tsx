@@ -42,7 +42,9 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${amiri.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <DhikrProvider>
+            <AppLayout>{children}</AppLayout>
+          </DhikrProvider>
         </ThemeProvider>
 
         {/* Service Worker Kaydı */}
@@ -87,5 +89,5 @@ export default function RootLayout({
 import './globals.css'
 
 export const metadata = {
-      generator: 'v0.dev'
-    };
+  generator: 'v0.dev'
+};
