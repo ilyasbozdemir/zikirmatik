@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, Settings, Plus, Info, BookOpen, List, Globe, BarChart3 } from "lucide-react"
+import { Home, Plus, Globe, BarChart3, User } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -40,7 +40,7 @@ export function BottomNav({ onAddDhikr }: BottomNavProps) {
       </div>
 
       <NavItem href="/social" icon={Globe} label="Keşfet" />
-      <NavItem href="/settings" icon={Settings} label="Ayar" />
+      <NavItem href="/profile" icon={User} label="Profil" />
     </div>
   )
 }
