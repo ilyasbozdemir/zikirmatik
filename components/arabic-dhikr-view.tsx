@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { arabicDhikrs, specialDaysDhikrs, prayerDhikrs } from "@/lib/arabic-dhikrs"
+import { getStorageItem } from "@/lib/storage-helper"
 import type { Dhikr } from "@/types/dhikr"
 
 interface ArabicDhikrViewProps {
@@ -17,10 +18,7 @@ interface ArabicDhikrViewProps {
 
 export function ArabicDhikrView({ onClose, onAddDhikr }: ArabicDhikrViewProps) {
   const [activeTab, setActiveTab] = useState("regular")
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem("dhikrSoundEnabled")
-    return saved !== null ? saved === "true" : true
-  })
+  const [soundEnabled, setSoundEnabled] = useState(() => getStorageItem("dhikrSoundEnabled", true))
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const { toast } = useToast()
 
@@ -56,14 +54,14 @@ export function ArabicDhikrView({ onClose, onAddDhikr }: ArabicDhikrViewProps) {
     }
   }
 
-  const addToList = (dhikr: (typeof arabicDhikrs)[0]) => {
+  const addToList = (dhikr: any) => {
     onAddDhikr({
-      name: dhikr.name,
+      name: dhikr.transliteration || dhikr.name,
       targetCount: dhikr.count,
       category: dhikr.category,
       arabicText: dhikr.name,
       transliteration: dhikr.transliteration,
-      translation: dhikr.translation,
+      translation: dhikr.translation || "",
     })
 
     toast({
