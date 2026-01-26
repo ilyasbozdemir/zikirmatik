@@ -63,10 +63,12 @@ export function AuthComponent() {
             let message = error.message
             if (error.status === 422) {
                 message = "Şifreniz çok zayıf veya geçersiz e-posta. En az 6 karakter kullanın."
+            } else if (message === "Failed to fetch") {
+                message = "İnternet bağlantısı kurulamadı. Lütfen ağ ayarlarınızı kontrol edin."
             }
             setErrorMsg(message)
             toast({
-                title: "Hata",
+                title: "Bağlantı Hatası",
                 description: message,
                 variant: "destructive",
             })
