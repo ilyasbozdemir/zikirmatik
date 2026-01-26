@@ -156,12 +156,12 @@ export function DhikrLibrary({ onClose, onAddDhikr, onAddDhikrSeries }: DhikrLib
     }
   }
 
-  const addToList = (dhikr: (typeof arabicDhikrs)[0] | CustomDhikr) => {
+  const addToList = (dhikr: any) => {
     onAddDhikr({
       name: dhikr.transliteration || dhikr.name,
       targetCount: dhikr.count,
       category: dhikr.category,
-      arabicText: dhikr.name || dhikr.arabicText,
+      arabicText: dhikr.arabicText || dhikr.name,
       transliteration: dhikr.transliteration,
       translation: dhikr.translation,
     })
