@@ -15,6 +15,7 @@ export function AuthComponent() {
     const [password, setPassword] = useState("")
     const [isSignUp, setIsSignUp] = useState(false)
     const [user, setUser] = useState<any>(null)
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const { toast } = useToast()
 
     useEffect(() => {

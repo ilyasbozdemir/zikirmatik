@@ -17,6 +17,8 @@ const amiri = Amiri({
   variable: "--font-amiri",
 })
 
+import { Toaster } from "@/components/ui/toaster"
+
 export default function RootLayout({
   children,
 }: {
@@ -46,6 +48,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <DhikrProvider>
             <AppLayout>{children}</AppLayout>
+            <Toaster />
           </DhikrProvider>
         </ThemeProvider>
 
