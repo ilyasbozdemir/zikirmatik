@@ -24,8 +24,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { arabicDhikrs } from "@/lib/arabic-dhikrs"
-import type { Dhikr } from "@/app/page"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -73,10 +71,7 @@ type DhikrCollection = {
 export function DhikrLibrary({ onClose, onAddDhikr, onAddDhikrSeries }: DhikrLibraryProps) {
   const [activeTab, setActiveTab] = useState("collection")
   const [searchTerm, setSearchTerm] = useState("")
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem("dhikrSoundEnabled")
-    return saved !== null ? saved === "true" : true
-  })
+  const [soundEnabled, setSoundEnabled] = useState(true)
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null)
   const [customDhikrs, setCustomDhikrs] = useState<CustomDhikr[]>([])
   const [collections, setCollections] = useState<DhikrCollection[]>([])
@@ -88,27 +83,11 @@ export function DhikrLibrary({ onClose, onAddDhikr, onAddDhikrSeries }: DhikrLib
   const [selectedDhikrsForCollection, setSelectedDhikrsForCollection] = useState<string[]>([])
   const { toast } = useToast()
 
-  // Load custom dhikrs from localStorage
+  // Load data from storage safely
   useEffect(() => {
-    const savedCustomDhikrs = localStorage.getItem("customDhikrs")
-    if (savedCustomDhikrs) {
-      try {
-        setCustomDhikrs(JSON.parse(savedCustomDhikrs))
-      } catch (error) {
-        console.error("Error parsing saved custom dhikrs:", error)
-        setCustomDhikrs([])
-      }
-    }
-
-    const savedCollections = localStorage.getItem("dhikrCollections")
-    if (savedCollections) {
-      try {
-        setCollections(JSON.parse(savedCollections))
-      } catch (error) {
-        console.error("Error parsing saved dhikr collections:", error)
-        setCollections([])
-      }
-    }
+    setSoundEnabled(getStorageItem("dhikrSoundEnabled", true))
+    setCustomDhikrs(getStorageItem("customDhikrs", []))
+    setCollections(getStorageItem("dhikrCollections", []))
   }, [])
 
   // Check clipboard for text
@@ -129,14 +108,17 @@ export function DhikrLibrary({ onClose, onAddDhikr, onAddDhikrSeries }: DhikrLib
     checkClipboard()
   }, [isAddingNew])
 
-  // Save custom dhikrs to localStorage
+  // Save data to storage
   useEffect(() => {
-    localStorage.setItem("customDhikrs", JSON.stringify(customDhikrs))
+    setStorageItem("dhikrSoundEnabled", soundEnabled)
+  }, [soundEnabled])
+
+  useEffect(() => {
+    setStorageItem("customDhikrs", customDhikrs)
   }, [customDhikrs])
 
-  // Save collections to localStorage
   useEffect(() => {
-    localStorage.setItem("dhikrCollections", JSON.stringify(collections))
+    setStorageItem("dhikrCollections", collections)
   }, [collections])
 
   const playAudio = (audioPath: string | undefined) => {
