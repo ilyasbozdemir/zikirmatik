@@ -6,6 +6,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { AuthComponent } from "@/components/auth"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useDhikrs } from "@/context/dhikr-context"
 
 interface SidebarProps {
   onAddDhikr: () => void
