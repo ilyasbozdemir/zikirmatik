@@ -119,11 +119,15 @@ export function AuthComponent() {
                         <Input
                             id="password"
                             type="password"
-                            placeholder="••••••••"
+                            placeholder="En az 6 karakter"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            minLength={6}
                         />
+                        {isSignUp && (
+                            <p className="text-[10px] text-muted-foreground">Şifreniz en az 6 karakter olmalıdır.</p>
+                        )}
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? (
