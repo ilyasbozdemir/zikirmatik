@@ -23,7 +23,7 @@ const DhikrContext = createContext<DhikrContextType | undefined>(undefined)
 
 export function DhikrProvider({ children }: { children: React.ReactNode }) {
     const [dhikrs, setDhikrs] = useState<Dhikr[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [user, setUser] = useState<any>(null)
     const [isSyncing, setIsSyncing] = useState(false)
     const { toast } = useToast()
