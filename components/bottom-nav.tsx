@@ -1,74 +1,46 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Home, Settings, Plus, HelpCircle, BookOpen, List, Globe } from "lucide-react"
+import { Home, Settings, Plus, Info, BookOpen, List, Globe, BarChart3 } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 interface BottomNavProps {
-  activeView: string
-  onNavigate: (view: string) => void
   onAddDhikr: () => void
-  onShare: () => void
-  onDhikrLibrary: () => void
-  onDhikrSeries: () => void
-  onArabicDhikr?: () => void
 }
 
-export function BottomNav({
-  activeView,
-  onNavigate,
-  onAddDhikr,
-  onShare,
-  onDhikrLibrary,
-  onDhikrSeries,
-}: BottomNavProps) {
+export function BottomNav({ onAddDhikr }: BottomNavProps) {
+  const pathname = usePathname()
+  const isActive = (path: string) => pathname === path
+
+  const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => (
+    <Link
+      href={href}
+      className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${isActive(href) ? 'text-primary scale-110' : 'text-muted-foreground hover:text-primary/70'}`}
+    >
+      <Icon className={`h-6 w-6 ${isActive(href) ? 'fill-primary/10' : ''}`} />
+      <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">{label}</span>
+    </Link>
+  )
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around px-2 z-10">
-      <Button
-        variant="ghost"
-        size="icon"
-        className={activeView === "home" ? "text-primary" : "text-muted-foreground"}
-        onClick={() => onNavigate("home")}
-      >
-        <Home className="h-5 w-5" />
-      </Button>
+    <div className="fixed bottom-0 left-0 right-0 h-20 border-t bg-background/80 backdrop-blur-xl flex items-center justify-around px-2 z-50 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <NavItem href="/" icon={Home} label="Ana" />
+      <NavItem href="/stats" icon={BarChart3} label="İstat" />
 
-      <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={onDhikrLibrary} title="Kütüphane">
-        <BookOpen className="h-5 w-5" />
-      </Button>
+      <div className="relative -mt-10 mx-2">
+        <Button
+          variant="default"
+          size="icon"
+          className="h-16 w-16 rounded-[2rem] shadow-premium bg-vibrant-gradient hover:scale-105 active:scale-95 transition-all border-none"
+          onClick={onAddDhikr}
+        >
+          <Plus className="h-8 w-8 text-white" />
+        </Button>
+      </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className={activeView === "social" ? "text-primary" : "text-muted-foreground"}
-        onClick={() => onNavigate("social")}
-        title="Keşfet"
-      >
-        <Globe className="h-5 w-5" />
-      </Button>
-
-      <Button variant="default" size="icon" className="h-12 w-12 rounded-full shadow-lg -mt-6" onClick={onAddDhikr} title="Ekle">
-        <Plus className="h-6 w-6" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className={activeView === "series" ? "text-primary" : "text-muted-foreground"}
-        onClick={onDhikrSeries}
-        title="Seriler"
-      >
-        <List className="h-5 w-5" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className={activeView === "settings" || activeView === "help" ? "text-primary" : "text-muted-foreground"}
-        onClick={() => onNavigate(activeView === "help" ? "settings" : "help")}
-        title="Ayarlar/Yardım"
-      >
-        {activeView === "help" ? <Settings className="h-5 w-5" /> : <HelpCircle className="h-5 w-5" />}
-      </Button>
+      <NavItem href="/social" icon={Globe} label="Keşfet" />
+      <NavItem href="/settings" icon={Settings} label="Ayar" />
     </div>
   )
 }
