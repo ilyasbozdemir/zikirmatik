@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Copy, Check } from "lucide-react"
 import type { Dhikr } from "@/app/page"
 import { motion } from "framer-motion"
-import { commonDhikrs } from "@/lib/arabic-dhikrs"
+import { PRESET_DHIKRS } from "@/lib/arabic-dhikrs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -75,7 +75,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
     }
 
     setCustomInput(false)
-    const selected = commonDhikrs.find((d) => d.name === value)
+    const selected = PRESET_DHIKRS.find((d: any) => d.name === value)
     if (selected) {
       setName(selected.name)
       setTargetCount(selected.count)
@@ -121,7 +121,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
   }
 
   // Get unique categories from common dhikrs
-  const categories = [...new Set(commonDhikrs.map((d) => d.category).filter(Boolean))]
+  const categories = [...new Set(PRESET_DHIKRS.map((d: any) => d.category).filter(Boolean))]
 
   return (
     <div className="container max-w-md mx-auto p-4">
@@ -147,7 +147,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="custom">Özel Zikir</SelectItem>
-              {commonDhikrs.map((dhikr) => (
+              {PRESET_DHIKRS.map((dhikr: any) => (
                 <SelectItem key={dhikr.name} value={dhikr.name}>
                   {dhikr.name} ({dhikr.count})
                 </SelectItem>
@@ -261,7 +261,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
               <SelectValue placeholder="Kategori seçin" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((cat) => (
+              {categories.map((cat: any) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
