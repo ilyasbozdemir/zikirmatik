@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button"
 import { Home, BarChart3, Clock, Settings, Info, Plus, Share2, BookOpen, Database, List, Globe, User, UserPlus } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
-import { AuthComponent } from "@/components/auth"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useDhikrs } from "@/context/dhikr-context"
@@ -65,9 +64,14 @@ export function Sidebar({ onAddDhikr }: SidebarProps) {
           Yeni Zikir Ekle
         </Button>
 
-        <div className="p-3 glass rounded-2xl border border-primary/20">
-          <AuthComponent />
-        </div>
+        {!user && (
+          <div className="p-4 glass rounded-2xl border border-primary/10 bg-primary/5 text-center space-y-3">
+            <p className="text-xs font-medium text-muted-foreground">Verilerinizi yedeklemek için giriş yapın.</p>
+            <Button variant="outline" className="w-full h-10 rounded-xl font-bold border-2" asChild>
+              <Link href="/login">Giriş Yap / Kayıt Ol</Link>
+            </Button>
+          </div>
+        )}
 
         <div className="text-center pt-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">v1.5.0-premium</p>
