@@ -291,7 +291,7 @@ export function SettingsView({ onClose, onShare }: SettingsViewProps) {
           </CardHeader>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Zikirmatik v1.1.0</p>
-            <p className="text-sm text-muted-foreground mt-1">© 2023 Tüm hakları saklıdır.</p>
+            <p className="text-sm text-muted-foreground mt-1">© 2025 Tüm hakları saklıdır.</p>
             <p className="text-sm text-primary mt-2 font-medium">Ömür boyu ücretsiz</p>
 
             <div className="mt-4">
