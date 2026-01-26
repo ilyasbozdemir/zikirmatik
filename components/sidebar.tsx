@@ -14,6 +14,7 @@ interface SidebarProps {
 export function Sidebar({ onAddDhikr }: SidebarProps) {
   const pathname = usePathname()
 
+  const { user } = useDhikrs()
   const isActive = (path: string) => pathname === path
 
   const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => (
