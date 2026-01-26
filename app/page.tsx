@@ -15,8 +15,19 @@ import {
   RotateCcw,
   Trash2,
   Play,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { InstallPWAButton, UpdatePWAButton } from "@/components/pwa-manager"
@@ -29,10 +40,30 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("planned")
+  const [dhikrToDelete, setDhikrToDelete] = useState<string | null>(null)
+  const [dhikrToRepeat, setDhikrToRepeat] = useState<Dhikr | null>(null)
 
-  const handleRepeat = (dhikr: Dhikr) => {
-    repeatDhikr(dhikr)
-    setActiveTab("planned")
+  const handleRepeatConfirm = (dhikr: Dhikr) => {
+    setDhikrToRepeat(dhikr)
+  }
+
+  const handleExecuteRepeat = () => {
+    if (dhikrToRepeat) {
+      repeatDhikr(dhikrToRepeat)
+      setActiveTab("planned")
+      setDhikrToRepeat(null)
+    }
+  }
+
+  const handleDeleteConfirm = (id: string) => {
+    setDhikrToDelete(id)
+  }
+
+  const handleExecuteDelete = async () => {
+    if (dhikrToDelete) {
+      await deleteDhikr(dhikrToDelete)
+      setDhikrToDelete(null)
+    }
   }
 
   const plannedDhikrs = dhikrs.filter((d) => d.status !== "completed")
@@ -122,7 +153,7 @@ export default function Home() {
                             </Badge>
                           )}
                         </div>
-                        <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all" onClick={() => deleteDhikr(dhikr.id)}>
+                        <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all" onClick={() => handleDeleteConfirm(dhikr.id)}>
                           <Trash2 className="h-5 w-5" />
                         </Button>
                       </div>
@@ -185,7 +216,7 @@ export default function Home() {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => handleRepeat(dhikr)}>
+                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary transition-all" onClick={() => handleRepeatConfirm(dhikr)}>
                         <Plus className="h-5 w-5" />
                       </Button>
                     </div>
@@ -198,6 +229,41 @@ export default function Home() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Onay Dialogları */}
+      <AlertDialog open={!!dhikrToDelete} onOpenChange={(open) => !open && setDhikrToDelete(null)}>
+        <AlertDialogContent className="glass rounded-[2rem] border-none shadow-premium">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-xl font-bold">
+              <AlertTriangle className="h-6 w-6 text-destructive mr-2" /> Emin Misiniz?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-medium">
+              Bu zikri silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel className="rounded-xl border-none bg-secondary">İptal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExecuteDelete} className="rounded-xl bg-destructive text-white hover:bg-destructive/90">Sil</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!dhikrToRepeat} onOpenChange={(open) => !open && setDhikrToRepeat(null)}>
+        <AlertDialogContent className="glass rounded-[2rem] border-none shadow-premium">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-xl font-bold text-primary">
+              <RotateCcw className="h-6 w-6 mr-2" /> Tekrarla
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-medium">
+              Bu zikri tekrar çekilecekler listesine eklemek ister misiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel className="rounded-xl border-none bg-secondary">Vazgeç</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExecuteRepeat} className="rounded-xl bg-vibrant-gradient text-white border-none">Evet, Ekle</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
