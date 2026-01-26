@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, RotateCcw, Volume2, VolumeX, Vibrate, AlertTriangle } from "lucide-react"
+import { X, RotateCcw, Volume2, VolumeX, Vibrate, AlertTriangle } from "lucide-react"
 import type { Dhikr } from "@/types/dhikr"
 import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
@@ -195,12 +195,12 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
         <div className="container max-w-md mx-auto p-4 flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <Button variant="ghost" size="icon" onClick={handleClose}>
-                <ArrowLeft className="h-6 w-6" />
-              </Button>
-              <h1 className="text-2xl font-bold ml-2">Zikir Çek</h1>
+              <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Zikir Zamanı</h1>
             </div>
             <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive order-last ml-2">
+                <X className="h-6 w-6" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={toggleSound}>
                 {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </Button>

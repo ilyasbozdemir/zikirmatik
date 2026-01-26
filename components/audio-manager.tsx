@@ -24,13 +24,12 @@ export function useAudioManager() {
         const handleCanPlayThrough = () => {
           setIsAudioLoaded(true)
           setAudioError(null)
+          console.log("Audio system ready")
         }
 
-        const handleError = () => {
-          // Çok fazla log basmamak için uyaralım ama sistemi kitlemeyelim
-          console.warn("Varsayılan ses dosyası (/click.mp3) bulunamadı. Sessiz modda çalışacak.")
-          setIsAudioLoaded(false)
-          // Hata göstermiyoruz ki kullanıcıyı rahatsız etmeyelim, sadece ses çıkmayacak
+        const handleError = (e: any) => {
+          console.warn("Audio file issue:", e)
+          // Don't set isAudioLoaded to false permanently, let it try to play anyway
         }
 
         clickSound.addEventListener("canplaythrough", handleCanPlayThrough)

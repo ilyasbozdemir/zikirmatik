@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { Search, User, Globe, Users, Heart, Share2, Plus, Loader2, ArrowLeft, Mail, Lock, CheckCircle2, UserPlus2, LogOut, ShieldCheck, KeyRound } from "lucide-react"
+import { Search, User, Globe, Users, Heart, Share2, Plus, Loader2, X, Mail, Lock, CheckCircle2, UserPlus2, LogOut, ShieldCheck, KeyRound } from "lucide-react"
 import { dbService } from "@/lib/db-services"
 import { supabase } from "@/lib/supabase"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -132,16 +132,18 @@ export function SocialView({ user, onClose, onAddDhikrSeries }: SocialViewProps)
         <div className="container max-w-md mx-auto p-4 flex flex-col h-screen bg-background overflow-hidden">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={onClose} className="rounded-2xl">
-                        <ArrowLeft className="h-6 w-6" />
-                    </Button>
                     <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Sosyal Alan</h1>
                 </div>
-                {user && (
-                    <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()} className="rounded-2xl text-destructive hover:bg-destructive/10">
-                        <LogOut className="h-5 w-5" />
+                <div className="flex items-center gap-2">
+                    {user && (
+                        <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()} className="rounded-2xl text-destructive hover:bg-destructive/10">
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={onClose} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive">
+                        <X className="h-6 w-6" />
                     </Button>
-                )}
+                </div>
             </div>
 
             <Tabs defaultValue="discover" className="flex-1 flex flex-col overflow-hidden" onValueChange={setActiveTab}>
