@@ -58,9 +58,13 @@ export function AuthComponent() {
                 })
             }
         } catch (error: any) {
+            let message = error.message
+            if (error.status === 422) {
+                message = "Şifreniz çok zayıf veya geçersiz e-posta. En az 6 karakter kullanın."
+            }
             toast({
                 title: "Hata",
-                description: error.message,
+                description: message,
                 variant: "destructive",
             })
         } finally {
