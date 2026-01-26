@@ -156,17 +156,31 @@ export const dbService = {
   },
 
   async getPublicCollections() {
-    const { data, error } = await supabase
-      .from('dhikr_collections')
-      .select('*, profiles(username)')
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('dhikr_collections')
+        .select(`
+          id,
+          name,
+          description,
+          dhikrs,
+          created_at,
+          profiles (
+            username
+          )
+        `)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching public collections:', error)
+      if (error) {
+        console.error('Supabase Error (Collections):', error.message, error.details)
+        return []
+      }
+      return data || []
+    } catch (err) {
+      console.error('Unexpected error in getPublicCollections:', err)
       return []
     }
-    return data
   },
 
   async shareCollection(collection: any) {
