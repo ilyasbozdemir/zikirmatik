@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Play, Volume2, VolumeX, Copy, Check, Plus } from "lucide-react"
+import { X, Play, Volume2, VolumeX, Copy, Check, Plus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -78,15 +78,17 @@ export function ArabicDhikrView({ onClose, onAddDhikr }: ArabicDhikrViewProps) {
   return (
     <div className="container max-w-md mx-auto p-4 flex flex-col h-screen overflow-hidden">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="text-2xl font-bold ml-2">Arapça Zikirler</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Kütüphane</h1>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)}>
-          {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)} className="rounded-2xl">
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive">
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
