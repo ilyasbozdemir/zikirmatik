@@ -37,6 +37,17 @@ export function AuthComponent() {
         setLoading(true)
         setErrorMsg(null)
 
+        if (!isSupabaseConfigured) {
+            setErrorMsg("Supabase bağlantısı eksik! Lütfen proje ayarlarından API anahtarlarını ekleyin.")
+            toast({
+                title: "Yapılandırma Hatası",
+                description: "Supabase bağlantısı henüz kurulmamış.",
+                variant: "destructive",
+            })
+            setLoading(false)
+            return
+        }
+
         try {
             if (isSignUp) {
                 const { error } = await supabase.auth.signUp({
