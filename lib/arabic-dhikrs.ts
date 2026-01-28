@@ -157,14 +157,68 @@ export const prayerDhikrs = [
 ]
 
 export const PRESET_DHIKRS = [
-  { name: "Sübhanallah", count: 33, category: "Tesbih" },
-  { name: "Elhamdülillah", count: 33, category: "Tesbih" },
-  { name: "Allah'ü Ekber", count: 33, category: "Tesbih" },
-  { name: "La ilahe illallah", count: 100, category: "Tevhid" },
-  { name: "Estağfirullah", count: 100, category: "İstiğfar" },
-  { name: "Hasbünallahü ve ni'mel vekil", count: 33, category: "Dua" },
-  { name: "La havle vela kuvvete illa billah", count: 33, category: "Dua" },
-  { name: "Sübhanallahi ve bihamdihi", count: 100, category: "Tesbih" },
-  { name: "Sübhanallahi'l-azim", count: 33, category: "Tesbih" },
+  {
+    name: "Sübhanallah",
+    count: 33,
+    category: "Tesbih",
+    arabicText: "سُبْحَانَ اللّهِ",
+    translation: "Allah'ı tüm eksikliklerden tenzih ederim",
+  },
+  {
+    name: "Elhamdülillah",
+    count: 33,
+    category: "Tesbih",
+    arabicText: "اَلْحَمْدُ لِلّهِ",
+    translation: "Hamd Allah'a mahsustur",
+  },
+  {
+    name: "Allahu Ekber",
+    count: 33,
+    category: "Tesbih",
+    arabicText: "اللّهُ أَكْبَرُ",
+    translation: "Allah en büyüktür",
+  },
+  {
+    name: "La ilahe illallah",
+    count: 100,
+    category: "Tevhid",
+    arabicText: "لَا إِلَهَ إِلَّا اللّهُ",
+    translation: "Allah'tan başka ilah yoktur",
+  },
+  {
+    name: "Estağfirullah",
+    count: 100,
+    category: "İstiğfar",
+    arabicText: "أَسْتَغْفِرُ اللّهَ",
+    translation: "Allah'tan bağışlanma dilerim",
+  },
+  {
+    name: "Hasbünallahü ve ni'mel vekil",
+    count: 33,
+    category: "Dua",
+    arabicText: "حَسْبُنَا اللّهُ وَنِعْمَ الْوَكِيلُ",
+    translation: "Allah bize yeter, O ne güzel vekildir",
+  },
+  {
+    name: "La havle vela kuvvete illa billah",
+    count: 33,
+    category: "Dua",
+    arabicText: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللّهِ",
+    translation: "Güç ve kuvvet ancak Allah'tandır",
+  },
+  {
+    name: "Sübhanallahi ve bihamdihi",
+    count: 100,
+    category: "Tesbih",
+    arabicText: "سُبْحَانَ اللّهِ وَبِحَمْدِهِ",
+    translation: "Allah'ı hamd ile tenzih ederim",
+  },
+  {
+    name: "Sübhanallahi'l-azim",
+    count: 33,
+    category: "Tesbih",
+    arabicText: "سُبْحَانَ اللّهِ الْعَظِيمِ",
+    translation: "Yüce Allah'ı tenzih ederim",
+  },
 ]
 

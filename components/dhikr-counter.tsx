@@ -180,15 +180,25 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
             <div className="flex items-center">
               <h1 className="text-3xl font-black bg-vibrant-gradient bg-clip-text text-transparent italic">Zikir Zamanı</h1>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-2xl hover:bg-destructive/10 hover:text-destructive order-last ml-2">
-                <X className="h-6 w-6" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={toggleSound}>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSound}
+                className={`rounded-xl transition-colors ${soundEnabled ? "text-primary bg-primary/10" : "text-muted-foreground opacity-50"}`}
+              >
                 {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={toggleVibration}>
-                <Vibrate className={`h-5 w-5 ${vibrationEnabled ? "" : "opacity-30"}`} />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleVibration}
+                className={`rounded-xl transition-colors ${vibrationEnabled ? "text-primary bg-primary/10" : "text-muted-foreground opacity-50"}`}
+              >
+                <Vibrate className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-xl hover:bg-destructive/10 hover:text-destructive">
+                <X className="h-6 w-6" />
               </Button>
             </div>
           </div>
@@ -197,34 +207,40 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-8"
             >
-              <h2 className="text-3xl font-black mb-2 px-4">{dhikr.name}</h2>
-              {dhikr.arabicText && <p className="font-arabic text-3xl mb-3 leading-relaxed text-primary/80">{dhikr.arabicText}</p>}
-              <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px] opacity-60">Hedef: {formatNumber(dhikr.targetCount)}</p>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-black mb-2 px-4">{dhikr.name}</h2>
+                {dhikr.arabicText && <p className="font-arabic text-4xl mb-4 leading-relaxed text-primary/90 drop-shadow-sm">{dhikr.arabicText}</p>}
+                {dhikr.translation && <p className="text-muted-foreground font-medium italic text-sm max-w-xs mx-auto mb-3 opacity-80">"{dhikr.translation}"</p>}
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px] opacity-60">Hedef: {formatNumber(dhikr.targetCount)}</p>
+              </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full mb-10 px-2">
-              <Progress value={progress} className="h-3 shadow-inner rounded-full border border-primary/5" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="w-full mb-10 px-2 min-w-[300px]">
+                <Progress value={progress} className="h-3 shadow-inner rounded-full border border-primary/5" />
+              </div>
             </motion.div>
 
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`text-center mb-12`}
             >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={count}
-                  initial={{ opacity: 0, scale: 0.8, y: -20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 1.2, y: 20 }}
-                  className="text-9xl font-black bg-vibrant-gradient bg-clip-text text-transparent select-none"
-                >
-                  {formatNumber(count)}
-                </motion.div>
-              </AnimatePresence>
-              <p className="text-muted-foreground font-black mt-4 uppercase tracking-[0.3em] opacity-40 text-xs">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
+              <div className="text-center mb-12">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={count}
+                    initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 1.2, y: 20 }}
+                  >
+                    <div className="text-9xl font-black bg-vibrant-gradient bg-clip-text text-transparent select-none">
+                      {formatNumber(count)}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+                <p className="text-muted-foreground font-black mt-4 uppercase tracking-[0.3em] opacity-40 text-xs">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
+              </div>
             </motion.div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-2">
@@ -234,7 +250,6 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
               <motion.div
                 whileTap={{ scale: 0.92 }}
                 whileHover={{ scale: 1.05 }}
-                className="relative"
               >
                 <Button
                   variant="default"
