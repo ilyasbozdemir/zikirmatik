@@ -184,62 +184,43 @@ export default function AdminPage() {
                     </Card>
                 </div>
 
-                {/* Requirements / Notes Panel */}
+                {/* Recent Activities Panel */}
                 <div className="md:col-span-8">
                     <Card className="glass border-none shadow-premium h-full flex flex-col">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <CheckCircle2 className="h-5 w-5 text-primary" />
-                                Gereksinimler & Notlar
+                                <Activity className="h-5 w-5 text-primary" />
+                                Son Aktiviteler
                             </CardTitle>
                             <CardDescription>
-                                Yapılacaklar listesi ve geliştirme notları
+                                Sistemdeki son kullanıcı hareketleri
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex gap-3">
-                                <Input
-                                    placeholder="Yeni bir madde ekle..."
-                                    value={newRequirement}
-                                    onChange={(e) => setNewRequirement(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && addRequirement()}
-                                    className="bg-muted/30 border-primary/10"
-                                />
-                                <Button onClick={addRequirement} className="bg-vibrant-gradient text-white">
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                            </div>
-
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                                {requirements.map((req) => (
-                                    <MotionDiv
-                                        key={req.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="group flex items-center justify-between p-3 rounded-xl bg-muted/10 hover:bg-muted/20 transition-colors border border-transparent hover:border-primary/10"
-                                    >
+                        <CardContent>
+                            <div className="space-y-4">
+                                {[
+                                    { user: "Ahmet Yılmaz", action: "Yeni zikir ekledi: 'Sübhanallah'", time: "2 dakika önce", avatar: "ahmet" },
+                                    { user: "Ayşe Demir", action: "Profilini güncelledi", time: "15 dakika önce", avatar: "ayse" },
+                                    { user: "Mehmet Kaya", action: "Zikir serisini tamamladı", time: "1 saat önce", avatar: "mehmet" },
+                                    { user: "Zeynep Çelik", action: "Sisteme giriş yaptı", time: "3 saat önce", avatar: "zeynep" },
+                                    { user: "Ali Veli", action: "Yeni bir koleksiyon oluşturdu", time: "5 saat önce", avatar: "ali" },
+                                ].map((activity, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-muted/5 border border-primary/5 hover:bg-muted/10 transition-colors">
                                         <div className="flex items-center gap-3">
-                                            <div
-                                                className={`h-5 w-5 rounded-full border-2 cursor-pointer flex items-center justify-center transition-colors ${req.completed ? 'bg-primary border-primary' : 'border-muted-foreground/30'}`}
-                                                onClick={() => toggleRequirement(req.id)}
-                                            >
-                                                {req.completed && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+                                            <Avatar className="h-9 w-9 border border-primary/10">
+                                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${activity.avatar}`} />
+                                                <AvatarFallback>{activity.user[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold">{activity.user}</span>
+                                                <span className="text-xs text-muted-foreground">{activity.action}</span>
                                             </div>
-                                            <span className={`font-medium ${req.completed ? 'text-muted-foreground line-through' : ''}`}>
-                                                {req.text}
-                                            </span>
                                         </div>
-                                        <Button variant="ghost" size="icon" onClick={() => deleteRequirement(req.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </MotionDiv>
-                                ))}
-
-                                {requirements.length === 0 && (
-                                    <div className="text-center py-8 text-muted-foreground text-sm">
-                                        Henüz bir not eklenmemiş.
+                                        <span className="text-[10px] text-muted-foreground font-medium bg-background px-2 py-1 rounded-full border border-primary/5">
+                                            {activity.time}
+                                        </span>
                                     </div>
-                                )}
+                                ))}
                             </div>
                         </CardContent>
                     </Card>
