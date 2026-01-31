@@ -6,18 +6,25 @@ import { BottomNav } from "@/components/bottom-nav"
 import { AddDhikrForm } from "@/components/add-dhikr-form"
 import { useDhikrs } from "@/context/dhikr-context"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { MigrationManager } from "@/components/migration-manager"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const [showAddForm, setShowAddForm] = useState(false)
     const { addNewDhikr } = useDhikrs()
     const router = useRouter()
+    const pathname = usePathname()
+
+    const isAdminPage = pathname?.startsWith("/admin")
 
     const handleAdd = (d: any) => {
         addNewDhikr(d)
         setShowAddForm(false)
         router.push("/")
+    }
+
+    if (isAdminPage) {
+        return <>{children}</>
     }
 
     return (
