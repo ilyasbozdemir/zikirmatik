@@ -21,7 +21,10 @@ import {
   Loader2,
   AlertTriangle,
   Globe,
-  Shield
+  AlertTriangle,
+  Globe,
+  Shield,
+  User
 } from "lucide-react"
 import {
   AlertDialog,
@@ -41,7 +44,7 @@ import type { Dhikr } from "@/types/dhikr"
 import { formatNumber } from "@/lib/format-number"
 
 export default function Home() {
-  const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr, addNewDhikr, isAdmin } = useDhikrs()
+  const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr, addNewDhikr, isAdmin, user } = useDhikrs()
   const router = useRouter()
   const [activeDhikr, setActiveDhikr] = useState<any>(null)
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
@@ -123,7 +126,17 @@ export default function Home() {
             <h1 className="text-4xl font-black tracking-tight bg-vibrant-gradient bg-clip-text text-transparent">Zikirlerim</h1>
             <p className="text-muted-foreground mt-1">Günlük zikirlerinizi takip edin</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* User Status Badge */}
+            {user && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-primary/10 shadow-sm mr-2">
+                <div className={`w-2 h-2 rounded-full ${isAdmin ? 'bg-primary animate-pulse' : 'bg-gray-400'}`} />
+                <span className="text-xs font-bold text-foreground/80">
+                  {isAdmin ? 'Admin' : 'Kullanıcı'}
+                </span>
+              </div>
+            )}
+
             {isAdmin && (
               <Button
                 variant="outline"
@@ -138,6 +151,17 @@ export default function Home() {
             <InstallPWAButton />
           </div>
         </div>
+
+        {/* Mobile User Status */}
+        {user && (
+          <div className="md:hidden flex items-center gap-2 px-4 py-2 -mt-4 rounded-xl bg-muted/5 border border-primary/5">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-foreground/70 truncate flex-1">{user.email}</span>
+            <Badge variant={isAdmin ? "default" : "secondary"} className="text-[10px] h-5">
+              {isAdmin ? 'YÖNETİCİ' : 'ÜYE'}
+            </Badge>
+          </div>
+        )}
 
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

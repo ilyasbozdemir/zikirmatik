@@ -24,7 +24,7 @@ const DhikrContext = createContext<DhikrContextType | undefined>(undefined)
 
 export function DhikrProvider({ children }: { children: React.ReactNode }) {
     const [dhikrs, setDhikrs] = useState<Dhikr[]>([])
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(true) // Start loading by default
     const [user, setUser] = useState<any>(null)
     const [isSyncing, setIsSyncing] = useState(false)
     const { toast } = useToast()
@@ -33,19 +33,36 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
 
     // Auth Listener
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            const currentUser = session?.user ?? null
-            setUser(currentUser)
-            setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
-        })
+        let mounted = true;
+
+        const initAuth = async () => {
+            // We don't set loading purely here because we wait for data load too
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (mounted) {
+                    const currentUser = session?.user ?? null
+                    setUser(currentUser)
+                    setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
+                }
+            } catch (error) {
+                console.error("Auth check failed", error)
+            }
+        }
+
+        initAuth()
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            const currentUser = session?.user ?? null
-            setUser(currentUser)
-            setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
+            if (mounted) {
+                const currentUser = session?.user ?? null
+                setUser(currentUser)
+                setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
+            }
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            mounted = false
+            subscription.unsubscribe()
+        }
     }, [])
 
     // Load Data
@@ -53,6 +70,10 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
         const loadData = async () => {
             setIsLoading(true)
             try {
+                // Ensure we have a small delay or check to allow auth to settle if needed,
+                // but relying on 'user' dependency is usually enough.
+                // However, initial render user is null.
+
                 let savedDhikrs = []
                 if (user) {
                     savedDhikrs = await dbService.getDhikrs(user.id)
@@ -73,6 +94,10 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
                 setIsLoading(false)
             }
         }
+
+        // Only trigger loadData after we've had a chance to check auth?
+        // Actually, user change triggers this.
+        // We just need to make sure initial loading state covers the gap.
         loadData()
     }, [user])
 
