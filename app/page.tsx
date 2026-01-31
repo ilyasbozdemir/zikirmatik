@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { AddDhikrForm } from "@/components/add-dhikr-form"
 import { useRouter } from "next/navigation"
 import {
@@ -276,6 +277,9 @@ export default function Home() {
 
         <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
           <SheetContent side="bottom" className="h-[90vh] p-0 overflow-y-auto rounded-t-[2rem] border-none shadow-premium">
+            <VisuallyHidden>
+              <SheetTitle>Yeni Zikir Ekle</SheetTitle>
+            </VisuallyHidden>
             <AddDhikrForm onAdd={handleAddFromPage} onCancel={() => setIsAddSheetOpen(false)} />
           </SheetContent>
         </Sheet>
