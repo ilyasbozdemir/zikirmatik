@@ -12,6 +12,7 @@ interface DhikrContextType {
     setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>
     isLoading: boolean
     user: any
+    isAdmin: boolean
     isSyncing: boolean
     addNewDhikr: (dhikr: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">) => void
     deleteDhikr: (id: string) => Promise<void>
@@ -28,14 +29,20 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
     const [isSyncing, setIsSyncing] = useState(false)
     const { toast } = useToast()
 
+    const [isAdmin, setIsAdmin] = useState(false)
+
     // Auth Listener
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null)
+            const currentUser = session?.user ?? null
+            setUser(currentUser)
+            setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
         })
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null)
+            const currentUser = session?.user ?? null
+            setUser(currentUser)
+            setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
         })
 
         return () => subscription.unsubscribe()
@@ -134,7 +141,7 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <DhikrContext.Provider value={{ dhikrs, setDhikrs, isLoading, user, isSyncing, addNewDhikr, deleteDhikr, updateDhikrCount, repeatDhikr }}>
+        <DhikrContext.Provider value={{ dhikrs, setDhikrs, isLoading, user, isAdmin, isSyncing, addNewDhikr, deleteDhikr, updateDhikrCount, repeatDhikr }}>
             {children}
         </DhikrContext.Provider>
     )

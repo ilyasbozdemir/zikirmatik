@@ -20,7 +20,8 @@ import {
   Play,
   Loader2,
   AlertTriangle,
-  Globe
+  Globe,
+  Shield
 } from "lucide-react"
 import {
   AlertDialog,
@@ -40,7 +41,7 @@ import type { Dhikr } from "@/types/dhikr"
 import { formatNumber } from "@/lib/format-number"
 
 export default function Home() {
-  const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr, addNewDhikr } = useDhikrs()
+  const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr, addNewDhikr, isAdmin } = useDhikrs()
   const router = useRouter()
   const [activeDhikr, setActiveDhikr] = useState<any>(null)
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
@@ -123,6 +124,16 @@ export default function Home() {
             <p className="text-muted-foreground mt-1">Günlük zikirlerinizi takip edin</p>
           </div>
           <div className="flex gap-2">
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => router.push('/admin')}
+                className="rounded-full bg-primary/10 hover:bg-primary/20 border-primary/20"
+              >
+                <Shield className="h-5 w-5 text-primary" />
+              </Button>
+            )}
             <UpdatePWAButton />
             <InstallPWAButton />
           </div>
