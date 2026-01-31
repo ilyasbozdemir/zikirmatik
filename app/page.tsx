@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { AddDhikrForm } from "@/components/add-dhikr-form"
+import { useRouter } from "next/navigation"
 import {
   Plus,
   Search,
@@ -16,7 +19,8 @@ import {
   Trash2,
   Play,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Globe
 } from "lucide-react"
 import {
   AlertDialog,
@@ -36,8 +40,10 @@ import type { Dhikr } from "@/types/dhikr"
 import { formatNumber } from "@/lib/format-number"
 
 export default function Home() {
-  const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr } = useDhikrs()
+  const { dhikrs, isLoading, deleteDhikr, updateDhikrCount, repeatDhikr, addNewDhikr } = useDhikrs()
+  const router = useRouter()
   const [activeDhikr, setActiveDhikr] = useState<any>(null)
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("planned")
@@ -65,6 +71,11 @@ export default function Home() {
       await deleteDhikr(dhikrToDelete)
       setDhikrToDelete(null)
     }
+  }
+
+  const handleAddFromPage = (d: any) => {
+    addNewDhikr(d)
+    setIsAddSheetOpen(false)
   }
 
   const plannedDhikrs = dhikrs.filter((d) => d.status !== "completed")
@@ -193,11 +204,45 @@ export default function Home() {
                   <Plus className="h-10 w-10 text-primary/40" />
                 </div>
                 <h3 className="text-2xl font-black text-foreground/80 mb-2">Listeniz Tertemiz</h3>
-                <p className="text-muted-foreground max-w-[250px] mx-auto leading-relaxed">Yeni bir zikir ekleyerek hedefinize doğru ilk adımı atın.</p>
+                <div className="grid gap-4 mt-4 w-full max-w-lg mx-auto">
+                  <Button
+                    variant="outline"
+                    className="h-auto py-6 flex flex-col items-center gap-3 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                    onClick={() => setIsAddSheetOpen(true)}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Plus className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-lg">Yeni Zikir Ekle</h4>
+                      <p className="text-sm text-muted-foreground">Kendi hedeflerinizi belirleyin</p>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-auto py-6 flex flex-col items-center gap-3 border-dashed border-2 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
+                    onClick={() => router.push('/social')}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Globe className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-lg">Keşfet</h4>
+                      <p className="text-sm text-muted-foreground">Başkalarının listelerini inceleyin</p>
+                    </div>
+                  </Button>
+                </div>
               </div>
             )}
           </AnimatePresence>
         </TabsContent>
+
+        <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+          <SheetContent side="bottom" className="h-[90vh] p-0 overflow-y-auto rounded-t-[2rem] border-none shadow-premium">
+            <AddDhikrForm onAdd={handleAddFromPage} onCancel={() => setIsAddSheetOpen(false)} />
+          </SheetContent>
+        </Sheet>
 
         <TabsContent value="recent" className="space-y-3 outline-none">
           {completedDhikrs.length > 0 ? (
