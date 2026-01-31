@@ -50,6 +50,9 @@ export default function Home() {
   const [dhikrToDelete, setDhikrToDelete] = useState<string | null>(null)
   const [dhikrToRepeat, setDhikrToRepeat] = useState<Dhikr | null>(null)
 
+  // Temporary fix for framer-motion React 19 types compatibility
+  const MotionDiv = motion.div as any
+
   const handleRepeatConfirm = (dhikr: Dhikr) => {
     setDhikrToRepeat(dhikr)
   }
@@ -177,7 +180,7 @@ export default function Home() {
                           <span className="text-primary">{Math.round((dhikr.currentCount / dhikr.targetCount) * 100)}%</span>
                         </div>
                         <div className="h-3 w-full bg-muted/50 rounded-full overflow-hidden p-0.5 border border-primary/5">
-                          <motion.div
+                          <MotionDiv
                             className="h-full bg-vibrant-gradient rounded-full shadow-lg"
                             initial={{ width: 0 }}
                             animate={{ width: `${(dhikr.currentCount / dhikr.targetCount) * 100}%` }}
