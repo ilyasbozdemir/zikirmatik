@@ -89,22 +89,16 @@ export default function AdminPage() {
     const MotionDiv = motion.div as any
 
     return (
-        <div className="min-h-screen bg-transparent p-6 pb-24 md:p-12 max-w-4xl mx-auto space-y-8">
-            {/* Header */}
+        <div className="space-y-6">
+            {/* Page Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.push("/")} className="rounded-full hover:bg-white/10">
-                        <ArrowLeft className="h-6 w-6" />
-                    </Button>
-                    <div>
-                        <h1 className="text-4xl font-black tracking-tight flex items-center gap-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-x">
-                            <Shield className="h-8 w-8 text-primary" />
-                            Admin Merkezi
-                        </h1>
-                        <p className="text-muted-foreground font-medium">
-                            Sistem Kontrol Paneli & Geliştirme Notları
-                        </p>
-                    </div>
+                <div>
+                    <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                            Kontrol Paneli
+                        </span>
+                    </h1>
+                    <p className="text-muted-foreground font-medium">Genel bakış ve sistem durumu</p>
                 </div>
                 <Badge variant="outline" className="px-4 py-1 border-primary/20 bg-primary/5 text-primary text-sm font-bold rounded-full">
                     v1.0.0-beta

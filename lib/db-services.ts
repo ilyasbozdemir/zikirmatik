@@ -192,5 +192,34 @@ export const dbService = {
       console.error('Error sharing collection:', error)
       throw error
     }
+  },
+
+  // Admin Services
+  async getAllProfiles() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false, nullsFirst: false }) // Safely order
+
+    if (error) {
+      console.error('Error fetching all profiles:', error)
+      return []
+    }
+    return data
+  },
+
+  async getGlobalDhikrStats() {
+    try {
+      // fetching a count of all dhikrs
+      const { count, error } = await supabase
+        .from('dhikrs')
+        .select('*', { count: 'exact', head: true })
+
+      if (error) throw error
+      return { totalDhikrs: count || 0 }
+    } catch (error) {
+      console.error('Error getting global stats:', error)
+      return { totalDhikrs: 0 }
+    }
   }
 }
