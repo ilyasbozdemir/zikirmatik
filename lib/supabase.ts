@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 // EN: Hardcoding keys to ensure local development connectivity.
 // TR: Yerel geliştirmede bağlantı sorununu kesin çözmek için anahtarları doğrudan tanımlıyoruz.
@@ -7,10 +7,4 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const isSupabaseConfigured = true
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
-})
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
