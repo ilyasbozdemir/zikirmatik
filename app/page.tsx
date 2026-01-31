@@ -21,8 +21,6 @@ import {
   Loader2,
   AlertTriangle,
   Globe,
-  AlertTriangle,
-  Globe,
   Shield,
   User
 } from "lucide-react"
