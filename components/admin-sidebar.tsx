@@ -13,7 +13,7 @@ import {
     Home
 } from "lucide-react"
 
-export function AdminSidebar() {
+export function AdminSidebarContent({ onItemClick }: { onItemClick?: () => void }) {
     const pathname = usePathname()
     const router = useRouter()
 
@@ -45,7 +45,7 @@ export function AdminSidebar() {
     ]
 
     return (
-        <div className="w-64 border-r border-primary/10 h-full bg-background/50 backdrop-blur-xl flex flex-col hidden md:flex">
+        <div className="flex flex-col h-full bg-background/50 backdrop-blur-xl">
             <div className="p-6 flex flex-col gap-1 items-center justify-center border-b border-primary/5">
                 <div className="bg-primary/10 p-3 rounded-full mb-2">
                     <Shield className="h-8 w-8 text-primary" />
@@ -65,7 +65,10 @@ export function AdminSidebar() {
                                 ? "bg-primary/10 text-primary hover:bg-primary/20"
                                 : "text-muted-foreground hover:bg-muted"
                         )}
-                        onClick={() => router.push(item.href)}
+                        onClick={() => {
+                            router.push(item.href)
+                            if (onItemClick) onItemClick()
+                        }}
                     >
                         <item.icon className="mr-3 h-5 w-5" />
                         {item.title}
@@ -90,6 +93,14 @@ export function AdminSidebar() {
                     Çıkış Yap
                 </Button>
             </div>
+        </div>
+    )
+}
+
+export function AdminSidebar() {
+    return (
+        <div className="w-64 border-r border-primary/10 h-full hidden md:block">
+            <AdminSidebarContent />
         </div>
     )
 }
