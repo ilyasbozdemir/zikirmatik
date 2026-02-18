@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 1.2%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222.2 47.4% 1.2%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222.2 47.4% 1.2%;
     --primary: 262 80% 50%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215 25% 27%;
+    --muted: 210 40% 92%;
+    --muted-foreground: 215 25% 10%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 214.3 31.8% 85%;
+    --input: 214.3 31.8% 85%;
     --ring: 262 80% 50%;
     --radius: 1.25rem;
     
@@ -146,3 +146,40 @@
   0% { transform: translateX(-100%) rotate(45deg); }
   100% { transform: translateX(100%) rotate(45deg); }
 }
+  /* Force high contrast in light mode for all text elements */
+  :root:not(.dark) .text-muted-foreground {
+    opacity: 1 !important;
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  :root:not(.dark) .opacity-90,
+  :root:not(.dark) .opacity-80,
+  :root:not(.dark) .opacity-70,
+  :root:not(.dark) .opacity-60, 
+  :root:not(.dark) .opacity-50,
+  :root:not(.dark) .opacity-40,
+  :root:not(.dark) .opacity-30,
+  :root:not(.dark) .opacity-20,
+  :root:not(.dark) .text-muted-foreground\/80,
+  :root:not(.dark) .text-muted-foreground\/60,
+  :root:not(.dark) .text-foreground\/80,
+  :root:not(.dark) .text-foreground\/70,
+  :root:not(.dark) .text-foreground\/60,
+  :root:not(.dark) .text-white\/90,
+  :root:not(.dark) .text-white\/80,
+  :root:not(.dark) .text-white\/70,
+  :root:not(.dark) .text-white\/60 {
+    opacity: 1 !important;
+    color: inherit;
+  }
+
+  /* Specific fix for white text on light backgrounds in light mode */
+  :root:not(.dark) .text-white:not(.bg-vibrant-gradient *) {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  :root:not(.dark) .glass {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+  }

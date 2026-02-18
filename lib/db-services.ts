@@ -1,8 +1,13 @@
-import { supabase } from "./supabase"
+import { supabase, isSupabaseConfigured } from "./supabase"
 import type { Dhikr } from "@/types/dhikr"
 
 export const dbService = {
   async getDhikrs(userId?: string): Promise<Dhikr[]> {
+    if (!isSupabaseConfigured) {
+        console.warn("Supabase not configured, returning empty list for dbService.getDhikrs")
+        return []
+    }
+
     const { data, error } = await supabase
       .from('dhikrs')
       .select('*')

@@ -74,8 +74,13 @@ export function AuthComponent() {
             let message = error.message
             if (error.status === 422) {
                 message = "Şifreniz çok zayıf veya geçersiz e-posta. En az 6 karakter kullanın."
-            } else if (message === "Failed to fetch") {
-                message = "İnternet bağlantısı kurulamadı. Lütfen ağ ayarlarınızı kontrol edin."
+            } else if (
+                message === "Failed to fetch" ||
+                message === "Load failed" ||
+                message === "Network request failed" ||
+                message?.includes("fetch")
+            ) {
+                message = "Sunucuya erişilemiyor. (Bağlantı engellendi veya proje duraklatılmış olabilir)"
             }
             setErrorMsg(message)
             toast({

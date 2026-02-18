@@ -14,7 +14,7 @@ interface SidebarProps {
 export function Sidebar({ onAddDhikr }: SidebarProps) {
   const pathname = usePathname()
 
-  const { user, supabaseError } = useDhikrs()
+  const { user, supabaseError, retryAuth } = useDhikrs()
   const isActive = (path: string) => pathname === path
 
   const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => (
@@ -74,10 +74,14 @@ export function Sidebar({ onAddDhikr }: SidebarProps) {
             </div>
             <p className="text-xs font-medium text-muted-foreground opacity-90">
               {supabaseError
-                ? "Sunucuya bağlanılamadı. Zikirleriniz güvenle telefonunuza kaydediliyor."
+                ? "Sunucuya bağlanılamadı. Proje 'uykuda' olabilir."
                 : "Zikirleriniz yerel olarak kaydediliyor. Buluta yedeklemek için giriş yapın."}
             </p>
-            {!supabaseError && (
+            {supabaseError ? (
+              <Button variant="outline" size="sm" onClick={() => retryAuth()} className="w-full h-8 mt-2 text-xs border-destructive/20 hover:bg-destructive/10">
+                Tekrar Dene
+              </Button>
+            ) : (
               <Button variant="outline" className="w-full h-10 rounded-xl font-bold border-2" asChild>
                 <Link href="/login">Giriş Yap</Link>
               </Button>

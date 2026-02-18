@@ -13,7 +13,7 @@ export async function createClient() {
     // Usually callers check isSupabaseConfigured.
     // For now, let's avoid the crash by providing empty strings if we MUST return a client, 
     // but better to return a client that won't throw on init.
-    return createServerClient("", "", { cookies: { getAll() { return [] }, setAll() {} } })
+    return createServerClient("https://placeholder.supabase.co", "placeholder", { cookies: { getAll() { return [] }, setAll() {} } })
   }
 
   return createServerClient(

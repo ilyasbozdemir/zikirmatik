@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react"
 import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
-import { supabase } from "@/lib/supabase"
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { dbService } from "@/lib/db-services"
 import { useToast } from "@/hooks/use-toast"
 import { Dhikr } from "@/types/dhikr"
@@ -19,6 +19,7 @@ interface DhikrContextType {
     deleteDhikr: (id: string) => Promise<void>
     updateDhikrCount: (id: string, count: number) => void
     repeatDhikr: (dhikr: Dhikr) => void
+    retryAuth: () => Promise<void>
 }
 
 const DhikrContext = createContext<DhikrContextType | undefined>(undefined)
@@ -38,6 +39,17 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
         let mounted = true;
 
         const initAuth = async () => {
+            // If Supabase is not configured (missing env vars), just stay in local/anonymous mode
+            // without triggering an error state.
+            if (!isSupabaseConfigured) {
+                if (mounted) {
+                    setUser(null)
+                    setIsAdmin(false)
+                    setSupabaseError(false)
+                }
+                return
+            }
+
             try {
                 // Try to get session. If ERR_CERT_AUTHORITY_INVALID occurs, this fetch will fail.
                 const { data: { session }, error } = await supabase.auth.getSession()
@@ -90,6 +102,13 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
             if (subscription) subscription.unsubscribe()
         }
     }, [supabaseError]) // Re-run if error cleared (manual retry logic could go here)
+
+    const retryAuth = async () => {
+        setSupabaseError(false)
+        setIsLoading(true)
+        // give it a moment to clear state, the useEffect [supabaseError] will re-trigger initAuth
+        setTimeout(() => setIsLoading(false), 1000)
+    }
 
     // Load Data
     useEffect(() => {
@@ -202,8 +221,26 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
             if (user) {
                 const syncToCloud = async () => {
                     setIsSyncing(true)
-                    try { await dbService.saveAllDhikrs(dhikrs, user.id) }
-                    catch (err) { console.error("Cloud sync failed:", err) }
+                    try {
+                        await dbService.saveAllDhikrs(dhikrs, user.id)
+                        // If sync succeeds, we can clear any previous error state?
+                        // Maybe safer to keep it manual (retryAuth) to avoid flip-flopping.
+                    }
+                    catch (err: any) {
+                        console.error("Cloud sync failed:", err)
+                        // If it's a network/db error, update status to show 'Connection Problem'
+                        const isNetworkError =
+                            err.message?.toLowerCase().includes('fetch') ||
+                            err.message?.toLowerCase().includes('network') ||
+                            err.message?.toLowerCase().includes('database error') ||
+                            err.code === 'PGRST301' || // specific postgrest error
+                            err.status === 500 ||
+                            err.status === 503;
+
+                        if (isNetworkError) {
+                            setSupabaseError(true)
+                        }
+                    }
                     finally { setIsSyncing(false) }
                 }
                 syncToCloud()
@@ -271,7 +308,8 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
             addNewDhikr,
             deleteDhikr,
             updateDhikrCount,
-            repeatDhikr
+            repeatDhikr,
+            retryAuth
         }}>
             {children}
         </DhikrContext.Provider>
