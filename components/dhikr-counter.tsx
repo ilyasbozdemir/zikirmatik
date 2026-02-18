@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { X, RotateCcw, Volume2, VolumeX, Vibrate, AlertTriangle } from "lucide-react"
 import type { Dhikr } from "@/types/dhikr"
-import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { formatNumber } from "@/lib/format-number"
 import { getStorageItem, setStorageItem } from "@/lib/storage-helper"
@@ -222,20 +221,14 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
 
           {/* Progress Bar (Subtle) */}
           <div className="w-full max-w-xs mb-12 h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ type: "spring", stiffness: 50 }}
+            <div
+              className="h-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
             />
           </div>
 
           {/* Dhikr Text */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
+          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tight text-foreground/90">
               {dhikr.name}
             </h2>
@@ -244,22 +237,17 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
                 {dhikr.translation}
               </p>
             )}
-          </motion.div>
+          </div>
 
           {/* Massive Counter */}
-          <motion.div
-            key={count}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative"
-          >
-            <span className="text-[12rem] md:text-[16rem] font-black leading-none bg-vibrant-gradient bg-clip-text text-transparent drop-shadow-sm tabular-nums tracking-tighter">
+          <div className="relative animate-in zoom-in duration-300">
+            <span className="text-[12rem] md:text-[16rem] font-black leading-none bg-vibrant-gradient bg-clip-text text-transparent drop-shadow-sm tabular-nums tracking-tighter select-none">
               {formatNumber(count)}
             </span>
             <p className="text-lg md:text-xl font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2 opacity-60">
               Hedef: {formatNumber(dhikr.targetCount)}
             </p>
-          </motion.div>
+          </div>
 
         </div>
 
