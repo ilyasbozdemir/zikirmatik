@@ -5,9 +5,20 @@ import { cookies } from 'next/headers'
 export async function createClient() {
   const cookieStore = await cookies()
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Return a dummy client or handle as null? 
+    // Usually callers check isSupabaseConfigured.
+    // For now, let's avoid the crash by providing empty strings if we MUST return a client, 
+    // but better to return a client that won't throw on init.
+    return createServerClient("", "", { cookies: { getAll() { return [] }, setAll() {} } })
+  }
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
