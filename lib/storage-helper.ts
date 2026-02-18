@@ -1,12 +1,12 @@
 // localStorage'a güvenli erişim için yardımcı fonksiyonlar
-export const getStorageItem = (key: string, defaultValue: any = null): any => {
+export const getStorageItem = <T>(key: string, defaultValue: T): T => {
   if (typeof window === "undefined") {
     return defaultValue
   }
 
   try {
     const item = localStorage.getItem(key)
-    return item ? JSON.parse(item) : defaultValue
+    return item ? JSON.parse(item) as T : defaultValue
   } catch (error) {
     console.error(`Error getting item ${key} from localStorage:`, error)
     return defaultValue

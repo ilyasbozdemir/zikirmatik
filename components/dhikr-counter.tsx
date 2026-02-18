@@ -211,8 +211,8 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-black mb-2 px-4">{dhikr.name}</h2>
                 {dhikr.arabicText && <p className="font-arabic text-4xl mb-4 leading-relaxed text-primary/90 drop-shadow-sm">{dhikr.arabicText}</p>}
-                {dhikr.translation && <p className="text-muted-foreground font-medium italic text-sm max-w-xs mx-auto mb-3 opacity-80">"{dhikr.translation}"</p>}
-                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px] opacity-60">Hedef: {formatNumber(dhikr.targetCount)}</p>
+                {dhikr.translation && <p className="text-muted-foreground font-medium italic text-sm max-w-xs mx-auto mb-3 opacity-90">"{dhikr.translation}"</p>}
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px] opacity-90">Hedef: {formatNumber(dhikr.targetCount)}</p>
               </div>
             </motion.div>
 
@@ -239,7 +239,7 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
                     </div>
                   </motion.div>
                 </AnimatePresence>
-                <p className="text-muted-foreground font-black mt-4 uppercase tracking-[0.3em] opacity-40 text-xs">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
+                <p className="text-muted-foreground font-black mt-4 uppercase tracking-[0.3em] opacity-80 text-xs">Kalan: {formatNumber(dhikr.targetCount - count)}</p>
               </div>
             </motion.div>
 
@@ -261,7 +261,7 @@ export function DhikrCounter({ dhikr, onUpdate, onClose }: DhikrCounterProps) {
                 </Button>
               </motion.div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-10 uppercase tracking-[0.4em] font-black opacity-30 text-center">Hızlı sayım için seri dokunuş yapabilirsiniz</p>
+            <p className="text-[10px] text-muted-foreground mt-10 uppercase tracking-[0.4em] font-black opacity-80 text-center">Hızlı sayım için seri dokunuş yapabilirsiniz</p>
           </div>
         </div>
       </div>

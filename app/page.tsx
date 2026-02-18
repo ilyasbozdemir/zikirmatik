@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   Globe,
   Shield,
-  User
+  User,
+  Sparkles
 } from "lucide-react"
 import {
   AlertDialog,
@@ -171,6 +172,29 @@ export default function Home() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+
+        {/* Ramazan Banner for Anonymous Users */}
+        {!user && !isLoading && (
+          <MotionDiv
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-6 rounded-[2.5rem] bg-vibrant-gradient text-white shadow-premium relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-500">
+              <Sparkles className="h-24 w-24" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className="bg-white text-primary border-none text-[10px] font-black uppercase tracking-widest shadow-lg">Hoş Geldiniz</Badge>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              </div>
+              <h2 className="text-2xl font-black mb-1 flex items-center gap-2">Hayırlı Ramazanlar! 🌙</h2>
+              <p className="text-white font-bold text-sm max-w-[85%] leading-relaxed">
+                Ramazan ayı için güncellenmiş zikirler listenize eklendi. Üye olmadan dilediğinizce kullanabilirsiniz.
+              </p>
+            </div>
+          </MotionDiv>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

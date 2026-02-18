@@ -193,10 +193,17 @@ export const PRESET_DHIKRS = [
     translation: "Allah'tan bağışlanma dilerim",
   },
   {
+    name: "Allahümme salli ala Muhammed",
+    count: 100,
+    category: "Salavat",
+    arabicText: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ",
+    translation: "Allah'ım, Muhammed'e salat eyle",
+  },
+  {
     name: "Hasbünallahü ve ni'mel vekil",
     count: 33,
     category: "Dua",
-    arabicText: "حَسْبُنَا اللّهُ وَنِعْمَ الْوَكِيلُ",
+    arabicText: "حَسْبُنَا اللّهُ وَنِعْمَ الْوَكİلُ",
     translation: "Allah bize yeter, O ne güzel vekildir",
   },
   {
@@ -217,8 +224,36 @@ export const PRESET_DHIKRS = [
     name: "Sübhanallahi'l-azim",
     count: 33,
     category: "Tesbih",
-    arabicText: "سُبْحَانَ اللّهِ الْعَظِيمِ",
+    arabicText: "سُبْحَانَ اللّهِ الْعَظİمِ",
     translation: "Yüce Allah'ı tenzih ederim",
+  },
+  {
+    name: "Allahümme inneke afüvvün",
+    count: 100,
+    category: "Ramazan Özel",
+    arabicText: "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
+    translation: "Allah'ım! Sen affedicisin, affetmeyi seversin, beni de affet.",
+  },
+  {
+    name: "Ya Hayyu Ya Kayyum",
+    count: 100,
+    category: "Esmaül Hüsna",
+    arabicText: "يَا حَيُّ يَا قَيُّومُ",
+    translation: "Ey Hayy (diri olan) ve Kayyum (her şeyi ayakta tutan) olan Allah'ım!",
+  },
+  {
+    name: "Ya Zel Celali vel İkram",
+    count: 33,
+    category: "Esmaül Hüsna",
+    arabicText: "يَا ذَا الْجَلَالِ وَالْإِكْرَامِ",
+    translation: "Ey azamet ve ikram sahibi olan!",
+  },
+  {
+    name: "Lâ ilâhe illâ ente sübhâneke innî küntü minez-zâlimîn",
+    count: 40,
+    category: "Dua/Yunus (as)",
+    arabicText: "لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ",
+    translation: "Senden başka ilah yoktur. Seni tüm eksikliklerden tenzih ederim. Şüphesiz ben zalimlerden oldum.",
   },
 ]
 

@@ -14,7 +14,7 @@ interface SidebarProps {
 export function Sidebar({ onAddDhikr }: SidebarProps) {
   const pathname = usePathname()
 
-  const { user } = useDhikrs()
+  const { user, supabaseError } = useDhikrs()
   const isActive = (path: string) => pathname === path
 
   const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => (
@@ -66,10 +66,22 @@ export function Sidebar({ onAddDhikr }: SidebarProps) {
 
         {!user && (
           <div className="p-4 rounded-2xl border border-primary/10 bg-primary/5 backdrop-blur-sm text-center space-y-3">
-            <p className="text-xs font-medium text-muted-foreground">Verilerinizi yedeklemek için giriş yapın.</p>
-            <Button variant="outline" className="w-full h-10 rounded-xl font-bold border-2" asChild>
-              <Link href="/login">Giriş Yap / Kayıt Ol</Link>
-            </Button>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div className={`w-1.5 h-1.5 rounded-full ${supabaseError ? 'bg-destructive' : 'bg-orange-600'} animate-pulse`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${supabaseError ? 'text-destructive' : 'text-orange-600'} opacity-90`}>
+                {supabaseError ? 'Bağlantı Sorunu / Yerel Mod' : 'Anonim Mod'}
+              </span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground opacity-90">
+              {supabaseError
+                ? "Sunucuya bağlanılamadı. Zikirleriniz güvenle telefonunuza kaydediliyor."
+                : "Zikirleriniz yerel olarak kaydediliyor. Buluta yedeklemek için giriş yapın."}
+            </p>
+            {!supabaseError && (
+              <Button variant="outline" className="w-full h-10 rounded-xl font-bold border-2" asChild>
+                <Link href="/login">Giriş Yap</Link>
+              </Button>
+            )}
           </div>
         )}
 
@@ -80,4 +92,3 @@ export function Sidebar({ onAddDhikr }: SidebarProps) {
     </div>
   )
 }
-

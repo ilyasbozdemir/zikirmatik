@@ -203,7 +203,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
         >
           <div className="space-y-6">
             <div className="space-y-3 glass p-4 rounded-3xl border-primary/5 shadow-premium">
-              <Label htmlFor="preset" className="text-sm font-black uppercase tracking-widest opacity-60 ml-1">Hızlı Seçim</Label>
+              <Label htmlFor="preset" className="text-sm font-black uppercase tracking-widest opacity-90 ml-1">Hızlı Seçim</Label>
               <Select onValueChange={handleSelectDhikr} defaultValue="custom">
                 <SelectTrigger className="h-14 rounded-2xl border-primary/10 bg-background/50 text-lg font-bold">
                   <SelectValue placeholder="Ön tanımlı bir zikir seçin" />
@@ -228,7 +228,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
                   )}
 
                   <SelectGroup>
-                    <SelectLabel className="px-2 py-1.5 text-xs font-black uppercase tracking-widest opacity-40">Önerilenler</SelectLabel>
+                    <SelectLabel className="px-2 py-1.5 text-xs font-black uppercase tracking-widest opacity-80">Önerilenler</SelectLabel>
                     {allPresets.builtIn.map((dhikr: any) => (
                       <SelectItem key={`preset-${dhikr.name}`} value={dhikr.name} className="py-3">
                         <div className="flex flex-col">
@@ -244,7 +244,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
 
             <div className="space-y-4 glass p-6 rounded-[2.5rem] border-primary/5 shadow-premium">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-black uppercase tracking-widest opacity-60 ml-1">Zikir Adı / Okunuşu</Label>
+                <Label htmlFor="name" className="text-sm font-black uppercase tracking-widest opacity-90 ml-1">Zikir Adı / Okunuşu</Label>
                 <div className="flex items-center space-x-2">
                   <Input
                     id="name"
@@ -293,7 +293,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
                     exit={{ height: 0, opacity: 0 }}
                   >
                     <div className="space-y-2 overflow-hidden py-2">
-                      <Label htmlFor="arabicText" className="text-sm font-black uppercase tracking-widest opacity-60 ml-1">Arapça Yazılışı</Label>
+                      <Label htmlFor="arabicText" className="text-sm font-black uppercase tracking-widest opacity-90 ml-1">Arapça Yazılışı</Label>
                       <div className="flex items-center space-x-2">
                         <Textarea
                           id="arabicText"
@@ -378,7 +378,7 @@ export function AddDhikrForm({ onAdd, onCancel }: AddDhikrFormProps) {
               </div>
 
               <div className="space-y-3 glass p-5 rounded-3xl border-primary/5 shadow-premium">
-                <Label htmlFor="count" className="text-sm font-black uppercase tracking-widest opacity-60 ml-1">Hedef Sayı</Label>
+                <Label htmlFor="count" className="text-sm font-black uppercase tracking-widest opacity-90 ml-1">Hedef Sayı</Label>
                 <div className="flex items-center space-x-3">
                   <Button
                     type="button"

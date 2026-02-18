@@ -14,6 +14,7 @@ interface DhikrContextType {
     user: any
     isAdmin: boolean
     isSyncing: boolean
+    supabaseError: boolean
     addNewDhikr: (dhikr: Omit<Dhikr, "id" | "dateCreated" | "status" | "currentCount">) => void
     deleteDhikr: (id: string) => Promise<void>
     updateDhikrCount: (id: string, count: number) => void
@@ -30,76 +31,169 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
     const { toast } = useToast()
 
     const [isAdmin, setIsAdmin] = useState(false)
+    const [supabaseError, setSupabaseError] = useState(false)
 
     // Auth Listener
     useEffect(() => {
         let mounted = true;
 
         const initAuth = async () => {
-            // We don't set loading purely here because we wait for data load too
             try {
-                const { data: { session } } = await supabase.auth.getSession()
+                // Try to get session. If ERR_CERT_AUTHORITY_INVALID occurs, this fetch will fail.
+                const { data: { session }, error } = await supabase.auth.getSession()
+
+                if (error) throw error;
+
                 if (mounted) {
                     const currentUser = session?.user ?? null
                     setUser(currentUser)
                     setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
+                    setSupabaseError(false)
                 }
-            } catch (error) {
-                console.error("Auth check failed", error)
+            } catch (error: any) {
+                // Detailed handling for connectivity/SSL errors
+                const isNetworkError =
+                    error.message?.toLowerCase().includes('fetch') ||
+                    error.name === 'TypeError' ||
+                    error.status === 0 ||
+                    error.message?.toLowerCase().includes('network');
+
+                if (isNetworkError) {
+                    if (mounted) {
+                        setSupabaseError(true)
+                        // Log once clearly then stay silent
+                        console.warn("Zikirmatik: Bulut bağlantı sorunu (SSL/Ağ). Uygulama yerel modda devam ediyor.")
+                    }
+                } else {
+                    console.error("Auth check failed", error)
+                }
             }
         }
 
         initAuth()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (mounted) {
-                const currentUser = session?.user ?? null
-                setUser(currentUser)
-                setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
-            }
-        })
+        // Only listen for auth changes if we haven't encountered a major transport error
+        let subscription: any = null;
+        if (!supabaseError) {
+            const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+                if (mounted) {
+                    const currentUser = session?.user ?? null
+                    setUser(currentUser)
+                    setIsAdmin(currentUser?.email === "bozdemir.ib70@gmail.com")
+                }
+            })
+            subscription = data.subscription;
+        }
 
         return () => {
             mounted = false
-            subscription.unsubscribe()
+            if (subscription) subscription.unsubscribe()
         }
-    }, [])
+    }, [supabaseError]) // Re-run if error cleared (manual retry logic could go here)
 
     // Load Data
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true)
             try {
-                // Ensure we have a small delay or check to allow auth to settle if needed,
-                // but relying on 'user' dependency is usually enough.
-                // However, initial render user is null.
+                let savedDhikrs: Dhikr[] = []
+                // Only try to fetch from cloud if no supabase connection error
+                if (user && !supabaseError) {
+                    try {
+                        savedDhikrs = await dbService.getDhikrs(user.id)
+                    } catch (e) {
+                        console.warn("Cloud fetch failed, using local storage", e)
+                        savedDhikrs = getStorageItem<Dhikr[]>("dhikrs", [])
+                    }
 
-                let savedDhikrs = []
-                if (user) {
-                    savedDhikrs = await dbService.getDhikrs(user.id)
                     if (savedDhikrs.length === 0) {
-                        const localDhikrs = getStorageItem("dhikrs", [])
+                        const localDhikrs = getStorageItem<Dhikr[]>("dhikrs", [])
                         if (localDhikrs.length > 0) {
                             savedDhikrs = localDhikrs
-                            await dbService.saveAllDhikrs(localDhikrs, user.id)
+                            await dbService.saveAllDhikrs(localDhikrs, user.id).catch(() => { })
+                        } else {
+                            savedDhikrs = getDefaultDhikrs()
+                            await dbService.saveAllDhikrs(savedDhikrs, user.id).catch(() => { })
                         }
                     }
                 } else {
-                    savedDhikrs = getStorageItem("dhikrs", [])
+                    // Anonymous or connection error
+                    savedDhikrs = getStorageItem<Dhikr[]>("dhikrs", [])
+                    if (savedDhikrs.length === 0) {
+                        savedDhikrs = getDefaultDhikrs()
+                    }
                 }
                 setDhikrs(savedDhikrs)
             } catch (error) {
                 console.error("Error loading dhikrs:", error)
+                // Final fallback
+                setDhikrs(getStorageItem<Dhikr[]>("dhikrs", []) || getDefaultDhikrs())
             } finally {
                 setIsLoading(false)
             }
         }
-
-        // Only trigger loadData after we've had a chance to check auth?
-        // Actually, user change triggers this.
-        // We just need to make sure initial loading state covers the gap.
         loadData()
-    }, [user])
+    }, [user, supabaseError])
+
+    const getDefaultDhikrs = (): Dhikr[] => {
+        const now = new Date().toISOString()
+        return [
+            {
+                id: "def-ramadan",
+                name: "Ramazan Duası (Allahümme inneke afüvvün...)",
+                targetCount: 100,
+                currentCount: 0,
+                category: "Ramazan Özel",
+                status: "planned",
+                dateCreated: now,
+            },
+            {
+                id: "def-tevhid",
+                name: "Kelime-i Tevhid (Lâ ilâhe illâllâh)",
+                targetCount: 1000,
+                currentCount: 0,
+                category: "Tevhid",
+                status: "planned",
+                dateCreated: now,
+            },
+            {
+                id: "def-tesbih",
+                name: "Sübhanallahi ve bihamdihi",
+                targetCount: 100,
+                currentCount: 0,
+                category: "Tesbih",
+                status: "planned",
+                dateCreated: now,
+            },
+            {
+                id: "def-salavat",
+                name: "Salavat-ı Şerife (Allahümme salli ala Muhammed)",
+                targetCount: 100,
+                currentCount: 0,
+                category: "Salavat",
+                status: "planned",
+                dateCreated: now,
+            },
+            {
+                id: "def-istigfar",
+                name: "Günlük İstiğfar (Estağfirullah)",
+                targetCount: 100,
+                currentCount: 0,
+                category: "İstiğfar",
+                status: "planned",
+                dateCreated: now,
+            },
+            {
+                id: "def-yunus",
+                name: "Hazreti Yunus (as) Duası",
+                targetCount: 40,
+                currentCount: 0,
+                category: "Dua",
+                status: "planned",
+                dateCreated: now,
+            }
+        ]
+    }
 
     // Sync to Cloud
     useEffect(() => {
@@ -166,7 +260,19 @@ export function DhikrProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <DhikrContext.Provider value={{ dhikrs, setDhikrs, isLoading, user, isAdmin, isSyncing, addNewDhikr, deleteDhikr, updateDhikrCount, repeatDhikr }}>
+        <DhikrContext.Provider value={{
+            dhikrs,
+            setDhikrs,
+            isLoading,
+            user,
+            isAdmin,
+            isSyncing,
+            supabaseError,
+            addNewDhikr,
+            deleteDhikr,
+            updateDhikrCount,
+            repeatDhikr
+        }}>
             {children}
         </DhikrContext.Provider>
     )
